@@ -1,18 +1,63 @@
 <html>
     <head>
         <script src='js/mithril.js'></script>
+        <style>
+            body {
+                font-family: sans-serif
+            }
+
+            .menu {
+                background-color: lightgrey;
+                padding-top: 8px;
+                padding-bottom: 8px;
+            }
+
+            .menu a {
+                padding-right: 8px;
+                color: darkslategray;
+            }
+
+            .menu a.active {
+                color: black;
+                text-decoration: none;
+            }
+        </style>
         <title>BUNKER</title>
     </head>
     <body>
         <script>
+            const Title = function(title) {
+                return m('h1', {}, title);
+            };
+
+            const Menu = function(activeEntry) {
+                return m('div.menu', [
+                    m('a', {href: '#!/', className: activeEntry == 'home' ? 'active' : ''}, 'home'),
+                    m('a', {href: '#!/notes', className: activeEntry == 'notes' ? 'active' : ''}, 'notes')
+                ]);
+            };
+
             const Home = {
                 view: function() {
-                    return m('h1', {}, 'home')
+                    return  [
+                        Title('home'),
+                        Menu('home')
+                    ];
+                }
+            };
+
+            const Notes = {
+                view: function() {
+                    return  [
+                        Title('notes'),
+                        Menu('notes')
+                    ];
                 }
             };
 
             m.route(document.body, '/', {
-                '/': Home
+                '/': Home,
+                '/notes': Notes
             });
         </script>
     </body>
