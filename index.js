@@ -3,10 +3,16 @@ require('dotenv').config();
 
 const Joi = require('joi');
 
-const envCheck = Joi.validate(process.env.BUNKER_PORT, Joi.number().integer().required());
+const envSchema = Joi.object({
+    BUNKER_PORT: Joi.number().integer().required()
+}).unknown(true);
+
+const envCheck = Joi.validate(process.env, envSchema);
 
 if (envCheck.error) {
-    console.log(envCheck.error.details);
+    envCheck.error.details.forEach(function(detail) {
+        console.log(detail.message);
+    });
     process.exit(1);
 }
 
