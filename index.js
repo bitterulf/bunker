@@ -20,6 +20,7 @@ if (envCheck.error) {
 
 const Datastore = require('nedb');
 const db = new Datastore({ filename: './store/db', autoload: true });
+const notesDB = new Datastore({ filename: './store/notes', autoload: true });
 
 const Path = require('path');
 const Hapi = require('hapi');
@@ -58,6 +59,28 @@ server.register([require('hapi-auth-basic'), require('inert')], (err) => {
                 db.find({}, function (err, docs) {
                     return reply(JSON.stringify(docs));
                 });
+            });
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path:'/notes',
+        config: { auth: 'simple' },
+        handler: function (request, reply) {
+            notesDB.find({}, function (err, docs) {
+                return reply(docs);
+            });
+        }
+    });
+
+    server.route({
+        method: 'POST',
+        path:'/note',
+        config: { auth: 'simple' },
+        handler: function (request, reply) {
+            notesDB.insert([request.payload], function (err, newDocs) {
+                reply({});
             });
         }
     });
