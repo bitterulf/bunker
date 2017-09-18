@@ -1,7 +1,19 @@
 <html>
     <head>
+        <script src='js/mithril.js'></script>
         <title>BUNKER</title>
     </head>
     <body>
+        <script>
+            const Home = {
+                view: function() {
+                    return m('h1', {}, 'home')
+                }
+            };
+
+            m.route(document.body, '/', {
+                '/': Home
+            });
+        </script>
     </body>
 </html>
