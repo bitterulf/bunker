@@ -1,0 +1,26 @@
+{
+  "name": "bunker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --expose-gc index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docker-build": "docker build -t bunker .",
+    "docker-rm": "docker rm bunker",
+    "docker-run": "docker run --name bunker -p 8080:8080 -v bunker-volume:/usr/src/app/store -d --env-file './.env' bunker",
+    "docker-stop": "docker stop bunker",
+    "docker-rebuild": "npm run docker-build && npm run docker-stop && npm run docker-rm && npm run docker-run",
+    "docker-volume": "docker volume create --name bunker-volume"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "joi": "^11.0.1",
+    "nedb": "^1.8.0"
+  },
+  "devDependencies": {
+    "hapi": "^16.6.0"
+  }
+}
