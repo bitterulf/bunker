@@ -18,6 +18,7 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "hapi-auth-basic": "^4.2.0",
+    "inert": "^4.2.1",
     "joi": "^11.0.1",
     "nedb": "^1.8.0"
   },

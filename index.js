@@ -21,15 +21,26 @@ if (envCheck.error) {
 const Datastore = require('nedb');
 const db = new Datastore({ filename: './store/db', autoload: true });
 
+const Path = require('path');
 const Hapi = require('hapi');
 
 // Create a server with a host and port
-const server = new Hapi.Server();
+
+const server = new Hapi.Server({
+    connections: {
+        routes: {
+            files: {
+                relativeTo: Path.join(__dirname, 'public')
+            }
+        }
+    }
+});
+
 server.connection({
     port: process.env.BUNKER_PORT
 });
 
-server.register(require('hapi-auth-basic'), (err) => {
+server.register([require('hapi-auth-basic'), require('inert')], (err) => {
     server.auth.strategy('simple', 'basic', { validateFunc: function(request, username, password, callback) {
         if (username != process.env.BUNKER_ADMIN_USER || password != process.env.BUNKER_ADMIN_PASSWORD) {
             return callback(null, false, {});
@@ -48,6 +59,18 @@ server.register(require('hapi-auth-basic'), (err) => {
                     return reply(JSON.stringify(docs));
                 });
             });
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path: '/{param*}',
+        handler: {
+            directory: {
+                path: '.',
+                redirectToSlash: true,
+                index: true
+            }
         }
     });
 
