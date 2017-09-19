@@ -42,18 +42,16 @@ server.connection({
 });
 
 server.register([require('hapi-auth-basic'), require('inert')], (err) => {
-    server.auth.strategy('simple', 'basic', { validateFunc: function(request, username, password, callback) {
+    server.auth.strategy('simple', 'basic', true, { validateFunc: function(request, username, password, callback) {
         if (username != process.env.BUNKER_ADMIN_USER || password != process.env.BUNKER_ADMIN_PASSWORD) {
             return callback(null, false, {});
         }
         callback(null, true, { username: process.env.BUNKER_ADMIN_USER });
     } });
 
-    // Add the route
     server.route({
         method: 'GET',
         path:'/hello',
-        config: { auth: 'simple' },
         handler: function (request, reply) {
             db.insert([{ random: Math.random() }], function (err, newDocs) {
                 db.find({}, function (err, docs) {
@@ -66,7 +64,6 @@ server.register([require('hapi-auth-basic'), require('inert')], (err) => {
     server.route({
         method: 'GET',
         path:'/notes',
-        config: { auth: 'simple' },
         handler: function (request, reply) {
             notesDB.find({}, function (err, docs) {
                 return reply(docs);
@@ -77,7 +74,6 @@ server.register([require('hapi-auth-basic'), require('inert')], (err) => {
     server.route({
         method: 'POST',
         path:'/note',
-        config: { auth: 'simple' },
         handler: function (request, reply) {
             notesDB.insert([request.payload], function (err, newDocs) {
                 reply({});
