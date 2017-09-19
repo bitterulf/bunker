@@ -2,12 +2,7 @@
 require('dotenv').config();
 
 const Joi = require('joi');
-
-const envSchema = Joi.object({
-    BUNKER_PORT: Joi.number().integer().required(),
-    BUNKER_ADMIN_USER: Joi.string().alphanum().required(),
-    BUNKER_ADMIN_PASSWORD: Joi.string().required()
-}).unknown(true);
+const envSchema = require('./envSchema.js');
 
 const envCheck = Joi.validate(process.env, envSchema);
 
@@ -23,8 +18,6 @@ const notesDB = new Datastore({ filename: './store/notes', autoload: true });
 
 const Path = require('path');
 const Hapi = require('hapi');
-
-// Create a server with a host and port
 
 const server = new Hapi.Server({
     connections: {
