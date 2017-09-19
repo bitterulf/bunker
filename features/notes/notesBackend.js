@@ -3,7 +3,7 @@
 const Datastore = require('nedb');
 const notesDB = new Datastore({ filename: './store/notes', autoload: true });
 
-const notesPlugin = {
+const notesBackend = {
     register: function (server, options, next) {
         server.route({
             method: 'GET',
@@ -25,13 +25,21 @@ const notesPlugin = {
             }
         });
 
+        server.route({
+            method: 'GET',
+            path: '/notesFrontend.js',
+            handler: {
+                file: './features/notes/notesFrontend.js'
+            }
+        });
+
         next();
     }
 };
 
-notesPlugin.register.attributes = {
-    name: 'notesPlugin',
+notesBackend.register.attributes = {
+    name: 'notesBackend',
     version: '1.0.0'
 };
 
-module.exports = notesPlugin;
+module.exports = notesBackend;

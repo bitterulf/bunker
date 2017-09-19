@@ -34,7 +34,7 @@ server.register([
     require('hapi-auth-basic'),
     require('inert'),
     require('./plugins/authPlugin.js'),
-    require('./plugins/notesPlugin.js'),
+    require('./features/notes/notesBackend.js'),
     require('./plugins/publicPlugin.js')
 ], (err) => {
     server.start((err) => {
