@@ -17,8 +17,8 @@ const Notes = {
     },
     view: function() {
         return  [
-            Title('notes'),
-            Menu('notes'),
+            platform.title('notes'),
+            platform.menu('notes'),
             m('input#noteInput'),
             m('button', {
                 onclick: function() {
@@ -42,3 +42,5 @@ const Notes = {
         ];
     }
 };
+
+platform.register('notesFeature', '/notes', Notes);

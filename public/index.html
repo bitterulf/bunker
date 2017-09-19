@@ -1,6 +1,7 @@
 <html>
     <head>
         <script src='js/mithril.js'></script>
+        <script src='platform.js'></script>
         <script src='notesFrontend.js'></script>
         <style>
             body {
@@ -27,17 +28,6 @@
     </head>
     <body>
         <script>
-            const Title = function(title) {
-                return m('h1', {}, title);
-            };
-
-            const Menu = function(activeEntry) {
-                return m('div.menu', [
-                    m('a', {href: '#!/', className: activeEntry == 'home' ? 'active' : ''}, 'home'),
-                    m('a', {href: '#!/notes', className: activeEntry == 'notes' ? 'active' : ''}, 'notes')
-                ]);
-            };
-
             const state = {
                 notes: []
             };
@@ -45,16 +35,13 @@
             const Home = {
                 view: function() {
                     return  [
-                        Title('home'),
-                        Menu('home')
+                        platform.title('home'),
+                        platform.menu('home')
                     ];
                 }
             };
 
-            m.route(document.body, '/', {
-                '/': Home,
-                '/notes': Notes
-            });
+            platform.bootstrap();
         </script>
     </body>
 </html>
