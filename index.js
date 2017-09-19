@@ -19,7 +19,6 @@ if (envCheck.error) {
 }
 
 const Datastore = require('nedb');
-const db = new Datastore({ filename: './store/db', autoload: true });
 const notesDB = new Datastore({ filename: './store/notes', autoload: true });
 
 const Path = require('path');
@@ -48,18 +47,6 @@ server.register([require('hapi-auth-basic'), require('inert')], (err) => {
         }
         callback(null, true, { username: process.env.BUNKER_ADMIN_USER });
     } });
-
-    server.route({
-        method: 'GET',
-        path:'/hello',
-        handler: function (request, reply) {
-            db.insert([{ random: Math.random() }], function (err, newDocs) {
-                db.find({}, function (err, docs) {
-                    return reply(JSON.stringify(docs));
-                });
-            });
-        }
-    });
 
     server.route({
         method: 'GET',
