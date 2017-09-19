@@ -33,6 +33,14 @@ const notesBackend = {
             }
         });
 
+        server.route({
+            method: 'GET',
+            path: '/notes.css',
+            handler: {
+                file: './features/notes/notes.css'
+            }
+        });
+
         next();
     }
 };

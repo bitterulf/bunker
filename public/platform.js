@@ -2,31 +2,38 @@ const Platform = function() {
     this.features = [];
 };
 
-Platform.prototype.register = function(featureName, featureRoute, featureComponent) {
+Platform.prototype.register = function(featureName, featureRoute, featureCSS, featureComponent) {
     this.features.push({
         name: featureName,
         route: featureRoute,
-        component: featureComponent
+        component: featureComponent,
+        cssUrl: featureCSS
     });
 };
 
 Platform.prototype.bootstrap = function() {
     const routing = {
-        '/': Home
     };
 
     this.features.forEach(function(feature) {
         routing[feature.route] = feature.component;
+
+        const link  = document.createElement('link');
+        link.rel  = 'stylesheet';
+        link.type = 'text/css';
+        link.href = feature.cssUrl;
+        link.media = 'all';
+
+        document.head.appendChild(link);
     });
 
     m.route(document.body, '/', routing);
 };
 
 Platform.prototype.menu = function(activeEntry) {
-    return m('div.menu', [
-        m('a', {href: '#!/', className: activeEntry == 'home' ? 'active' : ''}, 'home'),
-        m('a', {href: '#!/notes', className: activeEntry == 'notes' ? 'active' : ''}, 'notes')
-    ]);
+    return m('div.menu', this.features.map(function(feature) {
+        return m('a', {href: '#!'+feature.route, className: activeEntry == feature.name ? 'active' : ''}, feature.name);
+    }));
 };
 
 Platform.prototype.title = function(title) {

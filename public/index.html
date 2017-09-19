@@ -2,6 +2,7 @@
     <head>
         <script src='js/mithril.js'></script>
         <script src='platform.js'></script>
+        <script src='homeFrontend.js'></script>
         <script src='notesFrontend.js'></script>
         <style>
             body {
@@ -28,19 +29,6 @@
     </head>
     <body>
         <script>
-            const state = {
-                notes: []
-            };
-
-            const Home = {
-                view: function() {
-                    return  [
-                        platform.title('home'),
-                        platform.menu('home')
-                    ];
-                }
-            };
-
             platform.bootstrap();
         </script>
     </body>

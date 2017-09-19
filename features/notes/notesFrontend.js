@@ -1,3 +1,7 @@
+const notesState = {
+    notes: []
+};
+
 const refreshNotes = function() {
     return m.request({
         method: 'GET',
@@ -5,7 +9,7 @@ const refreshNotes = function() {
         withCredentials: true,
     })
     .then(function(result) {
-        state.notes = result.sort(function(a, b) {
+        notesState.notes = result.sort(function(a, b) {
             return a.time - b.time;
         }).reverse();
     })
@@ -16,7 +20,7 @@ const Notes = {
         refreshNotes();
     },
     view: function() {
-        return  [
+        return  m('.notesFeature', [
             platform.title('notes'),
             platform.menu('notes'),
             m('input#noteInput'),
@@ -36,11 +40,11 @@ const Notes = {
                     });
                 }
             }, 'send'),
-            m('div', state.notes.map(function(note) {
+            m('div', notesState.notes.map(function(note) {
                 return m('div', note.message);
             }))
-        ];
+        ]);
     }
 };
 
-platform.register('notesFeature', '/notes', Notes);
+platform.register('notes', '/notes', '/notes.css', Notes);
