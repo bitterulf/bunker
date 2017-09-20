@@ -2,7 +2,6 @@
 
 const memoryBackend = {
     register: function (server, options, next) {
-        console.log(options);
 
         server.route({
             method: 'GET',

@@ -16,6 +16,7 @@ if (envCheck.error) {
 const Path = require('path');
 const Hapi = require('hapi');
 const Primus = require('primus');
+const fs = require('fs');
 
 const server = new Hapi.Server({
     connections: {
@@ -41,20 +42,27 @@ const createEmitter = function(featureName) {
     };
 };
 
-server.register([
-    require('hapi-auth-basic'),
-    require('inert'),
-    require('./plugins/authPlugin.js'),
-    require('./features/home/homeBackend.js'),
-    require('./features/notes/notesBackend.js'),
-    {
-        register: require('./features/memory/memoryBackend.js'),
-        options: {
-            emit: createEmitter('memory')
-        }
-    },
-    require('./plugins/publicPlugin.js')
-], (err) => {
+const loadFeatures = function() {
+    return fs.readdirSync('./features')
+        .map(function(feature){
+            return {
+                register: require('./features/'+feature+'/'+feature+'Backend.js'),
+                options: {
+                    emit: createEmitter(feature)
+                }
+            }
+        });
+};
+
+server.register(
+    ([
+        require('hapi-auth-basic'),
+        require('inert'),
+        require('./plugins/authPlugin.js')
+    ])
+    .concat(loadFeatures(), [
+        require('./plugins/publicPlugin.js')
+    ]), (err) => {
 
     primus.plugin('emit', require('primus-emit'));
 
