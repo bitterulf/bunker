@@ -41,7 +41,18 @@ const Notes = {
                 }
             }, 'send'),
             m('div', notesState.notes.map(function(note) {
-                return m('div', note.message);
+                return m('div', [m('button', {
+                    onclick: function() {
+                        return m.request({
+                            method: 'DELETE',
+                            url: '/note/'+note._id,
+                            withCredentials: true,
+                        })
+                        .then(function() {
+                            refreshNotes();
+                        });
+                    }
+                }, 'delete')], note.message);
             }))
         ]);
     }

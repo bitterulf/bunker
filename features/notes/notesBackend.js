@@ -26,6 +26,16 @@ const notesBackend = {
         });
 
         server.route({
+            method: 'DELETE',
+            path:'/note/{id}',
+            handler: function (request, reply) {
+                notesDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
+                    reply({numRemoved: numRemoved});
+                });
+            }
+        });
+
+        server.route({
             method: 'GET',
             path: '/notesFrontend.js',
             handler: {
