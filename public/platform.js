@@ -11,23 +11,43 @@ Platform.prototype.register = function(featureName, featureRoute, featureCSS, fe
     });
 };
 
-Platform.prototype.bootstrap = function() {
-    const routing = {
+Platform.prototype.listener = function(featureName, route) {
+    const primus = this.primus;
+
+    return function(eventName, cb) {
+        return primus.on(featureName+'-'+eventName, function() {
+            if (!route) {
+                cb();
+            }
+            else if (route == m.route.get()){
+                cb();
+            }
+        });
     };
+};
 
-    this.features.forEach(function(feature) {
-        routing[feature.route] = feature.component;
+Platform.prototype.bootstrap = function() {
+    this.primus = Primus.connect();
+    const features = this.features;
 
-        const link  = document.createElement('link');
-        link.rel  = 'stylesheet';
-        link.type = 'text/css';
-        link.href = feature.cssUrl;
-        link.media = 'all';
+    this.primus.on('connectionSuccess', function() {
+        const routing = {
+        };
 
-        document.head.appendChild(link);
+        features.forEach(function(feature) {
+            routing[feature.route] = feature.component;
+
+            const link  = document.createElement('link');
+            link.rel  = 'stylesheet';
+            link.type = 'text/css';
+            link.href = feature.cssUrl;
+            link.media = 'all';
+
+            document.head.appendChild(link);
+        });
+
+        m.route(document.body, '/', routing);
     });
-
-    m.route(document.body, '/', routing);
 };
 
 Platform.prototype.menu = function(activeEntry) {

@@ -31,16 +31,31 @@ server.connection({
     port: process.env.BUNKER_PORT
 });
 
+const primus = new Primus(server.listener);
+
+const createEmitter = function(featureName) {
+    return function(eventName) {
+        primus.forEach(function (spark, id, connections) {
+            spark.emit(featureName+'-'+eventName);
+        });
+    };
+};
+
 server.register([
     require('hapi-auth-basic'),
     require('inert'),
     require('./plugins/authPlugin.js'),
     require('./features/home/homeBackend.js'),
     require('./features/notes/notesBackend.js'),
+    {
+        register: require('./features/memory/memoryBackend.js'),
+        options: {
+            emit: createEmitter('memory')
+        }
+    },
     require('./plugins/publicPlugin.js')
 ], (err) => {
 
-    const primus = new Primus(server.listener);
     primus.plugin('emit', require('primus-emit'));
 
     primus.on('connection', function (spark) {

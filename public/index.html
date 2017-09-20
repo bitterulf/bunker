@@ -5,6 +5,7 @@
         <script src='platform.js'></script>
         <script src='homeFrontend.js'></script>
         <script src='notesFrontend.js'></script>
+        <script src='memoryFrontend.js'></script>
         <style>
             body {
                 font-family: sans-serif
@@ -31,11 +32,7 @@
     <body>
         <h1>connecting...</h1>
         <script>
-            const primus = Primus.connect();
-
-            primus.on('connectionSuccess', function() {
-                platform.bootstrap();
-            });
+            platform.bootstrap();
         </script>
     </body>
 </html>
