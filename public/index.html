@@ -1,5 +1,6 @@
 <html>
     <head>
+        <script src="/primus/primus.js"></script>
         <script src='js/mithril.js'></script>
         <script src='platform.js'></script>
         <script src='homeFrontend.js'></script>
@@ -28,8 +29,13 @@
         <title>BUNKER</title>
     </head>
     <body>
+        <h1>connecting...</h1>
         <script>
-            platform.bootstrap();
+            const primus = Primus.connect();
+
+            primus.on('connectionSuccess', function() {
+                platform.bootstrap();
+            });
         </script>
     </body>
 </html>

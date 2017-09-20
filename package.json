@@ -20,7 +20,10 @@
     "hapi-auth-basic": "^4.2.0",
     "inert": "^4.2.1",
     "joi": "^11.0.1",
-    "nedb": "^1.8.0"
+    "nedb": "^1.8.0",
+    "primus": "^7.1.0",
+    "primus-emit": "^1.0.0",
+    "ws": "^3.2.0"
   },
   "devDependencies": {
     "hapi": "^16.6.0"

@@ -15,6 +15,7 @@ if (envCheck.error) {
 
 const Path = require('path');
 const Hapi = require('hapi');
+const Primus = require('primus');
 
 const server = new Hapi.Server({
     connections: {
@@ -38,6 +39,14 @@ server.register([
     require('./features/notes/notesBackend.js'),
     require('./plugins/publicPlugin.js')
 ], (err) => {
+
+    const primus = new Primus(server.listener);
+    primus.plugin('emit', require('primus-emit'));
+
+    primus.on('connection', function (spark) {
+        spark.emit('connectionSuccess');
+    });
+
     server.start((err) => {
 
         if (err) {
