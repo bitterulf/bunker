@@ -1,5 +1,6 @@
 const scraperState = {
-    scrapers: []
+    scrapers: [],
+    selected: null
 };
 
 const refreshScrapers = function() {
@@ -20,6 +21,70 @@ const Scraper = {
         refreshScrapers();
     },
     view: function() {
+        const renderScraper = function(scraper) {
+            if (scraperState.selected != scraper._id) {
+                return '';
+            }
+
+            return m('div',
+                [
+                    m('button', {
+                        onclick: function() {
+                            return m.request({
+                                method: 'POST',
+                                url: '/scraper/'+scraper._id+'/scrape',
+                                withCredentials: true,
+                            })
+                            .then(function() {
+                                refreshScrapers();
+                            });
+                        }
+                    }, 'scrape'),
+                    m('button', {
+                        onclick: function() {
+                            return m.request({
+                                method: 'DELETE',
+                                url: '/scraper/'+scraper._id,
+                                withCredentials: true,
+                            })
+                            .then(function() {
+                                refreshScrapers();
+                            });
+                        }
+                    }, 'delete'),
+                    renderResults(scraper)
+                ]
+            );
+        };
+
+        const renderSelector = function(scraper) {
+            if (scraperState.selected != scraper._id) {
+                return m('button', {
+                    onclick: function() {
+                        scraperState.selected = scraper._id;
+                    }
+                }, 'select');
+            }
+
+            return m('button', {
+                    onclick: function() {
+                        scraperState.selected = null;
+                    }
+                }, 'unselect');
+        };
+
+        const renderResults = function(scraper) {
+
+            return m('div', {}, scraper.results.map(function(result) {
+                return m('div', [
+                    result.time,
+                    m('div', result.entries.map(function(entry) {
+                        return m('div', JSON.stringify(entry));
+                    }))
+                ]);
+            }));
+        };
+
         return  m('.scraperFeature', [
             platform.title('scraper'),
             platform.menu('scraper'),
@@ -51,33 +116,11 @@ const Scraper = {
                     });
                 }
             }, 'send'),
-            m('div', scraperState.scrapers.map(function(note) {
+            m('div', scraperState.scrapers.map(function(scraper) {
                 return m('div', [
-                    m('button', {
-                        onclick: function() {
-                            return m.request({
-                                method: 'DELETE',
-                                url: '/scraper/'+note._id,
-                                withCredentials: true,
-                            })
-                            .then(function() {
-                                refreshScrapers();
-                            });
-                        }
-                    }, 'delete'),
-                    m('div', {title: JSON.stringify(note.fields)}, note.url+' - '+note.selector),
-                    m('button', {
-                        onclick: function() {
-                            return m.request({
-                                method: 'POST',
-                                url: '/scraper/'+note._id+'/scrape',
-                                withCredentials: true,
-                            })
-                            .then(function() {
-                                refreshScrapers();
-                            });
-                        }
-                    }, 'scrape'),
+                    m('div', {title: JSON.stringify(scraper.fields)}, scraper.url+' - '+scraper.selector+' ['+scraper.results.length+']'),
+                    renderSelector(scraper),
+                    renderScraper(scraper)
                 ]);
             }))
         ]);
