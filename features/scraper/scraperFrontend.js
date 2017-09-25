@@ -74,6 +74,9 @@ const Scraper = {
         };
 
         const renderResults = function(scraper) {
+            const results = scraper.results.sort(function(a, b) {
+                return a.time - b.time;
+            }).reverse();
 
             return m('div', {}, scraper.results.map(function(result) {
                 return m('div', [
@@ -88,6 +91,11 @@ const Scraper = {
         return  m('.scraperFeature', [
             platform.title('scraper'),
             platform.menu('scraper'),
+            m('div', [m('button', {
+                onclick: function() {
+                    refreshScrapers();
+                }
+            }, 'refresh')]),
             m('input#scraperUrl', {placeholder: 'url'}),
             m('input#scraperSelector', {placeholder: 'selector'}),
             m('textarea#scraperFields', {placeholder: '{title: \'h1 a\'}'}),

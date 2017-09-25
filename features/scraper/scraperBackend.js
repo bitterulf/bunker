@@ -6,6 +6,23 @@ const scraperResultsDB = new Datastore({ filename: './store/scraperResults', aut
 
 const Xray = require('x-ray');
 
+const scrapeDump = function(scraper, cb) {
+    Xray()(scraper.url, scraper.selector, [scraper.fields])(function(err, result) {
+        if (result) {
+            const doc = {
+                time: Date.now(),
+                scraperId: scraper._id,
+                entries: result
+            };
+
+            scraperResultsDB.insert([doc], function (err, newDocs) {
+
+                return cb(null);
+            });
+        }
+    })
+};
+
 const scraperBackend = {
     register: function (server, options, next) {
         server.route({
@@ -61,20 +78,12 @@ const scraperBackend = {
             handler: function (request, reply) {
                 scraperDB.findOne({ _id: request.params.id }, function (err, doc) {
                     if (doc) {
-                        Xray()(doc.url, doc.selector, [doc.fields])(function(err, result) {
-                            if (result) {
-                                const doc = {
-                                    time: Date.now(),
-                                    scraperId: request.params.id,
-                                    entries: result
-                                };
-
-                                scraperResultsDB.insert([doc], function (err, newDocs) {
-
-                                    return reply({});
-                                });
-                            }
-                        })
+                        scrapeDump(doc, function() {
+                            return reply({});
+                        });
+                    }
+                    else {
+                        return reply({});
                     }
                 });
             }
@@ -95,6 +104,24 @@ const scraperBackend = {
                 file: './features/scraper/scraper.css'
             }
         });
+
+        let activeScrapers = {};
+
+        const scrapeJob = function() {
+            scraperDB.find({}, function (err, scraperDocs) {
+                scraperDocs.forEach(function(scraper) {
+                    if (!activeScrapers[scraper._id]) {
+                        activeScrapers[scraper._id] = Date.now();
+                        scrapeDump(scraper, function() {
+                            delete activeScrapers[scraper._id];
+                        });
+                    }
+                });
+            });
+        };
+
+        setInterval(scrapeJob, 15 * 60 * 1000);
+        scrapeJob();
 
         next();
     }
