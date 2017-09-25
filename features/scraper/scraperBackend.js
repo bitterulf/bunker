@@ -4,20 +4,46 @@ const Datastore = require('nedb');
 const scraperDB = new Datastore({ filename: './store/scraper', autoload: true });
 const scraperResultsDB = new Datastore({ filename: './store/scraperResults', autoload: true });
 
+const scraperCacheDB = new Datastore({ filename: './store/scraperCache', autoload: true });
+
 const Xray = require('x-ray');
+const md5 = require('md5');
+
+const saveCache = function(hash, payload, cb) {
+    scraperCacheDB.findOne({ hash: hash }, function (err, doc) {
+        if (doc) {
+            return cb();
+        }
+        else {
+            const cacheDoc = {hash: hash, payload: payload, time: Date.now()};
+            scraperCacheDB.insert(cacheDoc, function (err, newDocs) {
+                return cb();
+            });
+        }
+    });
+};
 
 const scrapeDump = function(scraper, cb) {
     Xray()(scraper.url, scraper.selector, [scraper.fields])(function(err, result) {
         if (result) {
-            const doc = {
-                time: Date.now(),
-                scraperId: scraper._id,
+            const hash = md5({
+                url: scraper.url,
+                selector: scraper.selector,
+                fields: scraper.fields,
                 entries: result
-            };
+            });
 
-            scraperResultsDB.insert([doc], function (err, newDocs) {
+            saveCache(hash, result, function() {
+                const doc = {
+                    hash: hash,
+                    time: Date.now(),
+                    scraperId: scraper._id
+                };
 
-                return cb(null);
+                scraperResultsDB.insert([doc], function (err, newDocs) {
+
+                    return cb(null);
+                });
             });
         }
     })
@@ -30,23 +56,34 @@ const scraperBackend = {
             path:'/scrapers',
             handler: function (request, reply) {
                 scraperDB.find({}, function (err, scraperDocs) {
-                    scraperResultsDB.find({}, function (err, scraperResults) {
-                        const resultSet = {};
+                    scraperCacheDB.find({}, function (err, scraperCacheDocs) {
+                        const cacheSet = {};
 
-                        scraperResults.forEach(function(scraperResult) {
-                            if (!resultSet[scraperResult.scraperId]) {
-                                resultSet[scraperResult.scraperId] = [];
-                            }
-                            resultSet[scraperResult.scraperId].push(scraperResult);
+                        scraperCacheDocs.forEach(function(cacheEntry) {
+                            cacheSet[cacheEntry.hash] = cacheEntry.payload;
                         });
 
-                        const enrichedScraper = scraperDocs.map(function(scraper) {
-                            scraper.results = resultSet[scraper._id] || [];
+                        scraperResultsDB.find({}, function (err, scraperResults) {
+                            const resultSet = {};
 
-                            return scraper;
+                            scraperResults.forEach(function(scraperResult) {
+                                if (!resultSet[scraperResult.scraperId]) {
+                                    resultSet[scraperResult.scraperId] = [];
+                                }
+
+                                scraperResult.entries = cacheSet[scraperResult.hash] || [];
+
+                                resultSet[scraperResult.scraperId].push(scraperResult);
+                            });
+
+                            const enrichedScraper = scraperDocs.map(function(scraper) {
+                                scraper.results = resultSet[scraper._id] || [];
+
+                                return scraper;
+                            });
+
+                            return reply(enrichedScraper);
                         });
-
-                        return reply(enrichedScraper);
                     });
                 });
             }

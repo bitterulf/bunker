@@ -81,6 +81,7 @@ const Scraper = {
             return m('div', {}, scraper.results.map(function(result) {
                 return m('div', [
                     result.time,
+                    result.hash,
                     m('div', result.entries.map(function(entry) {
                         return m('div', JSON.stringify(entry));
                     }))
