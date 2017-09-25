@@ -4,15 +4,34 @@ const scraperState = {
 };
 
 const refreshScrapers = function() {
+    refreshScrapersCache(function() {
+        m.request({
+            method: 'GET',
+            url: '/scrapers',
+            withCredentials: true,
+        })
+        .then(function(result) {
+            scraperState.scrapers = result.sort(function(a, b) {
+                return a.time - b.time;
+            }).reverse();
+        })
+    })
+};
+
+const refreshScrapersCache = function(cb) {
     return m.request({
         method: 'GET',
-        url: '/scrapers',
+        url: '/scrapers/cache',
         withCredentials: true,
     })
     .then(function(result) {
-        scraperState.scrapers = result.sort(function(a, b) {
-            return a.time - b.time;
-        }).reverse();
+        scraperState.scrapersCache = {};
+
+        result.forEach(function(entry) {
+            scraperState.scrapersCache[entry.hash] = entry;
+        });
+
+        cb();
     })
 };
 
@@ -78,14 +97,27 @@ const Scraper = {
                 return a.time - b.time;
             }).reverse();
 
-            return m('div', {}, scraper.results.map(function(result) {
-                return m('div', [
-                    result.time,
-                    result.hash,
-                    m('div', result.entries.map(function(entry) {
-                        return m('div', JSON.stringify(entry));
-                    }))
-                ]);
+            results.forEach(function(result, index) {
+                if (results[index+1] && results[index+1].hash != results[index].hash) {
+                    results[index].changed = true;
+                }
+                else if (!results[index+1]) {
+                    results[index].changed = true;
+                }
+                else {
+                    results[index].changed = false;
+                }
+            });
+
+            return m('div', {}, results.map(function(result) {
+                const entries = scraperState.scrapersCache[result.hash] ? scraperState.scrapersCache[result.hash].payload : [];
+
+                return m('div', {
+                    title: result.changed ? JSON.stringify(entries) : '',
+                    style: result.changed ? 'background: red;' : ''
+                },
+                    (new Date(result.time)).toISOString()
+                );
             }));
         };
 

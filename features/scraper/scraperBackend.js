@@ -56,35 +56,35 @@ const scraperBackend = {
             path:'/scrapers',
             handler: function (request, reply) {
                 scraperDB.find({}, function (err, scraperDocs) {
-                    scraperCacheDB.find({}, function (err, scraperCacheDocs) {
-                        const cacheSet = {};
+                    scraperResultsDB.find({}, function (err, scraperResults) {
+                        const resultSet = {};
 
-                        scraperCacheDocs.forEach(function(cacheEntry) {
-                            cacheSet[cacheEntry.hash] = cacheEntry.payload;
+                        scraperResults.forEach(function(scraperResult) {
+                            if (!resultSet[scraperResult.scraperId]) {
+                                resultSet[scraperResult.scraperId] = [];
+                            }
+
+                            resultSet[scraperResult.scraperId].push(scraperResult);
                         });
 
-                        scraperResultsDB.find({}, function (err, scraperResults) {
-                            const resultSet = {};
+                        const enrichedScraper = scraperDocs.map(function(scraper) {
+                            scraper.results = resultSet[scraper._id] || [];
 
-                            scraperResults.forEach(function(scraperResult) {
-                                if (!resultSet[scraperResult.scraperId]) {
-                                    resultSet[scraperResult.scraperId] = [];
-                                }
-
-                                scraperResult.entries = cacheSet[scraperResult.hash] || [];
-
-                                resultSet[scraperResult.scraperId].push(scraperResult);
-                            });
-
-                            const enrichedScraper = scraperDocs.map(function(scraper) {
-                                scraper.results = resultSet[scraper._id] || [];
-
-                                return scraper;
-                            });
-
-                            return reply(enrichedScraper);
+                            return scraper;
                         });
+
+                        return reply(enrichedScraper);
                     });
+                });
+            }
+        });
+
+        server.route({
+            method: 'GET',
+            path:'/scrapers/cache',
+            handler: function (request, reply) {
+                scraperCacheDB.find({}, function (err, scraperCacheDocs) {
+                    return reply(scraperCacheDocs);
                 });
             }
         });
