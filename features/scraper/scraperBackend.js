@@ -26,12 +26,12 @@ const saveCache = function(hash, payload, cb) {
 const scrapeDump = function(scraper, cb) {
     Xray()(scraper.url, scraper.selector, [scraper.fields])(function(err, result) {
         if (result) {
-            const hash = md5({
+            const hash = md5(JSON.stringify({
                 url: scraper.url,
                 selector: scraper.selector,
                 fields: scraper.fields,
                 entries: result
-            });
+            }));
 
             saveCache(hash, result, function() {
                 const doc = {
