@@ -1,7 +1,8 @@
 const scraperState = {
     scrapers: [],
     selected: null,
-    importOpen: false
+    importOpen: false,
+    scraperDump: ''
 };
 
 const refreshScrapers = function() {
@@ -33,6 +34,17 @@ const refreshScrapersCache = function(cb) {
         });
 
         cb();
+    })
+};
+
+const refreshScrapersDump = function(cb) {
+    return m.request({
+        method: 'GET',
+        url: '/scrapers/dump',
+        withCredentials: true,
+    })
+    .then(function(result) {
+        scraperState.scraperDump = JSON.stringify(result);
     })
 };
 
@@ -122,39 +134,6 @@ const Scraper = {
             }));
         };
 
-        const importDialog = function() {
-            if (!scraperState.importOpen) {
-                return m('div', [
-                    m('button', {onclick: function() {scraperState.importOpen = true}}, 'open import'),
-                ]);
-            }
-
-            return m('div', [
-                m('button', {onclick: function() {scraperState.importOpen = false}}, 'close import'),
-                m('textarea#scraperImport', {placeholder: '{title: \'h1 a\'}'}),
-                m('button', {onclick: function() {
-                    const scraperFields = document.querySelector('#scraperImport');
-                    let parsedData;
-                    try {
-                        parsedData = JSON.parse(scraperFields.value);
-
-                        return m.request({
-                            method: 'POST',
-                            url: '/scrapers/import',
-                            withCredentials: true,
-                            data: parsedData
-                        }).then(function() {
-                            refreshScrapers();
-                            scraperFields.value = '';
-                        });
-                    } catch (e) {
-                        console.log(e);
-                    }
-
-                }}, 'import!'),
-            ]);
-        };
-
         return  m('.scraperFeature', [
             platform.title('scraper'),
             platform.menu('scraper'),
@@ -163,8 +142,6 @@ const Scraper = {
                     refreshScrapers();
                 }
             }, 'refresh')]),
-            m('div', [m('a', { href: '/scrapers/dump', target: '_blank'}, 'dump')]),
-            importDialog(),
             m('input#scraperUrl', {placeholder: 'url'}),
             m('input#scraperSelector', {placeholder: 'selector'}),
             m('textarea#scraperFields', {placeholder: '{title: \'h1 a\'}'}),
@@ -204,4 +181,53 @@ const Scraper = {
     }
 };
 
-platform.register('scraper', '/scraper', '/scraper.css', Scraper);
+const ScraperDump = {
+    oninit: function() {
+        refreshScrapersDump();
+    },
+    view: function() {
+        return m('.scraperFeature', [
+            platform.title('scraper dump'),
+            platform.menu('scraper dump'),
+            m('div', scraperState.scraperDump)
+        ]);
+    }
+};
+
+const ScraperImport = {
+    oninit: function() {
+    },
+    view: function() {
+        return m('.scraperFeature', [
+            platform.title('scraper import'),
+            platform.menu('scraper import'),
+            m('textarea#scraperImport', {placeholder: '{title: \'h1 a\'}'}),
+            m('button', {onclick: function() {
+                const scraperFields = document.querySelector('#scraperImport');
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(scraperFields.value);
+
+                    return m.request({
+                        method: 'POST',
+                        url: '/scrapers/import',
+                        withCredentials: true,
+                        data: parsedData
+                    }).then(function() {
+                        refreshScrapers();
+                        scraperFields.value = '';
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+
+            }}, 'import!'),
+        ]);
+    }
+};
+
+platform.register('scraper', [
+    {name: 'scraper', route: '/scraper', component: Scraper},
+    {name: 'scraper dump', route: '/scraper/dump', component: ScraperDump},
+    {name: 'scraper import', route: '/scraper/import', component: ScraperImport}
+], '/scraper.css');

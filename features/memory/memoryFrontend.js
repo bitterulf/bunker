@@ -36,6 +36,4 @@ const Memory = {
     }
 };
 
-
-
-platform.register('memory', '/memory', '/memory.css', Memory);
+platform.register('memory', [{name: 'memory', route: '/memory', component: Memory}], '/memory.css');

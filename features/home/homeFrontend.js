@@ -7,4 +7,4 @@ const Home = {
     }
 };
 
-platform.register('home', '/', '/home.css', Home);
+platform.register('home', [{name: 'home', route: '/', component: Home}], '/home.css');

@@ -2,12 +2,17 @@ const Platform = function() {
     this.features = [];
 };
 
-Platform.prototype.register = function(featureName, featureRoute, featureCSS, featureComponent) {
-    this.features.push({
-        name: featureName,
-        route: featureRoute,
-        component: featureComponent,
-        cssUrl: featureCSS
+Platform.prototype.register = function(featureName, featureParts, featureCSS) {
+    const that = this;
+
+    featureParts.forEach(function(featurePart) {
+        that.features.push({
+            group: featureName,
+            name: featurePart.name,
+            route: featurePart.route,
+            component: featurePart.component,
+            cssUrl: featureCSS
+        });
     });
 };
 
@@ -51,8 +56,20 @@ Platform.prototype.bootstrap = function() {
 };
 
 Platform.prototype.menu = function(activeEntry) {
-    return m('div.menu', this.features.map(function(feature) {
-        return m('a', {href: '#!'+feature.route, className: activeEntry == feature.name ? 'active' : ''}, feature.name);
+    let itemGroups = {};
+
+    this.features.forEach(function(feature) {
+        if (!itemGroups[feature.group]) {
+            itemGroups[feature.group] = [];
+        }
+
+        itemGroups[feature.group].push(m('div', m('a', {href: '#!'+feature.route, className: activeEntry == feature.name ? 'active' : ''}, feature.name)));
+    });
+
+    console.log(Object.keys(itemGroups));
+
+    return m('div.menu', Object.keys(itemGroups).map(function(group) {
+        return m('div', {style: 'display: inline-block; vertical-align: text-top;'}, itemGroups[group]);
     }));
 };
 

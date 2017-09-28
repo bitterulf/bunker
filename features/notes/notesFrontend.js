@@ -58,4 +58,4 @@ const Notes = {
     }
 };
 
-platform.register('notes', '/notes', '/notes.css', Notes);
+platform.register('notes', [{name: 'notes', route: '/notes', component: Notes}], '/notes.css');
