@@ -9,6 +9,8 @@ const scraperCacheDB = new Datastore({ filename: './store/scraperCache', autoloa
 const Xray = require('x-ray');
 const md5 = require('md5');
 
+const _ = require('lodash');
+
 const saveCache = function(hash, payload, cb) {
     scraperCacheDB.findOne({ hash: hash }, function (err, doc) {
         if (doc) {
@@ -75,6 +77,28 @@ const scraperBackend = {
 
                         return reply(enrichedScraper);
                     });
+                });
+            }
+        });
+
+        server.route({
+            method: 'GET',
+            path:'/scrapers/dump',
+            handler: function (request, reply) {
+                scraperDB.find({}, function (err, scraperDocs) {
+                    return reply(scraperDocs.map(function(scraper) {
+                        return _.pick(scraper, ['url', 'selector', 'fields']);
+                    }));
+                });
+            }
+        });
+
+        server.route({
+            method: 'POST',
+            path:'/scrapers/import',
+            handler: function (request, reply) {
+                scraperDB.insert(request.payload, function (err, newDocs) {
+                    reply({});
                 });
             }
         });

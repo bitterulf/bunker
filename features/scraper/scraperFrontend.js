@@ -1,6 +1,7 @@
 const scraperState = {
     scrapers: [],
-    selected: null
+    selected: null,
+    importOpen: false
 };
 
 const refreshScrapers = function() {
@@ -121,6 +122,39 @@ const Scraper = {
             }));
         };
 
+        const importDialog = function() {
+            if (!scraperState.importOpen) {
+                return m('div', [
+                    m('button', {onclick: function() {scraperState.importOpen = true}}, 'open import'),
+                ]);
+            }
+
+            return m('div', [
+                m('button', {onclick: function() {scraperState.importOpen = false}}, 'close import'),
+                m('textarea#scraperImport', {placeholder: '{title: \'h1 a\'}'}),
+                m('button', {onclick: function() {
+                    const scraperFields = document.querySelector('#scraperImport');
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(scraperFields.value);
+
+                        return m.request({
+                            method: 'POST',
+                            url: '/scrapers/import',
+                            withCredentials: true,
+                            data: parsedData
+                        }).then(function() {
+                            refreshScrapers();
+                            scraperFields.value = '';
+                        });
+                    } catch (e) {
+                        console.log(e);
+                    }
+
+                }}, 'import!'),
+            ]);
+        };
+
         return  m('.scraperFeature', [
             platform.title('scraper'),
             platform.menu('scraper'),
@@ -129,6 +163,8 @@ const Scraper = {
                     refreshScrapers();
                 }
             }, 'refresh')]),
+            m('div', [m('a', { href: '/scrapers/dump', target: '_blank'}, 'dump')]),
+            importDialog(),
             m('input#scraperUrl', {placeholder: 'url'}),
             m('input#scraperSelector', {placeholder: 'selector'}),
             m('textarea#scraperFields', {placeholder: '{title: \'h1 a\'}'}),
