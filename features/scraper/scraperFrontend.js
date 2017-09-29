@@ -2,7 +2,8 @@ const scraperState = {
     scrapers: [],
     selected: null,
     importOpen: false,
-    scraperDump: ''
+    scraperDump: '',
+    scraperEvents: []
 };
 
 const refreshScrapers = function() {
@@ -45,6 +46,17 @@ const refreshScrapersDump = function(cb) {
     })
     .then(function(result) {
         scraperState.scraperDump = JSON.stringify(result);
+    })
+};
+
+const refreshScraperEvents = function(cb) {
+    return m.request({
+        method: 'GET',
+        url: '/scraper/events',
+        withCredentials: true,
+    })
+    .then(function(result) {
+        scraperState.scraperEvents = result;
     })
 };
 
@@ -226,8 +238,24 @@ const ScraperImport = {
     }
 };
 
+const ScraperEvents = {
+    oninit: function() {
+        refreshScraperEvents();
+    },
+    view: function() {
+        return m('.scraperFeature', [
+            platform.title('scraper events'),
+            platform.menu('scraper events'),
+            m('div', scraperState.scraperEvents.map(function(event) {
+                return m('div', m('a', { href: event.link }, event.scraperId + ' - ' + (new Date(event.time)).toISOString() + ': ' + event.title));
+            }))
+        ]);
+    }
+};
+
 platform.register('scraper', [
     {name: 'scraper', route: '/scraper', component: Scraper},
     {name: 'scraper dump', route: '/scraper/dump', component: ScraperDump},
-    {name: 'scraper import', route: '/scraper/import', component: ScraperImport}
+    {name: 'scraper import', route: '/scraper/import', component: ScraperImport},
+    {name: 'scraper events', route: '/scraper/events', component: ScraperEvents}
 ], '/scraper.css');

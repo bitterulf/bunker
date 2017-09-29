@@ -6,10 +6,94 @@ const scraperResultsDB = new Datastore({ filename: './store/scraperResults', aut
 
 const scraperCacheDB = new Datastore({ filename: './store/scraperCache', autoload: true });
 
+const scraperProcessedResultsDB = new Datastore({ filename: './store/scraperProcessedResults', autoload: true });
+
+const scraperEventsDB = new Datastore({ filename: './store/scraperEvents', autoload: true });
+
 const Xray = require('x-ray');
 const md5 = require('md5');
 
 const _ = require('lodash');
+
+const processScraperResult = function(scraperResult) {
+    scraperCacheDB.findOne({ hash: scraperResult.hash }, function (err, doc) {
+        if (doc) {
+            console.log('processing', scraperResult.scraperId);
+            const enrichedDocs = doc.payload
+            .filter(function(entry) { return entry.title && entry.link; })
+            .map(function(entry) {
+                entry.hash = md5(entry.link);
+                entry.scraperId = scraperResult.scraperId;
+                entry.time = scraperResult.time;
+                return entry;
+            });
+
+            scraperEventsDB.find({}, function(err, scraperEvents) {
+                const eventHashes = [];
+
+                console.log('existing events', scraperEvents.length);
+
+                scraperEvents.forEach(function(event) {
+                    eventHashes.push(event.hash);
+                })
+
+                const filteredEnrichedDocs = enrichedDocs.filter(function(entry) {
+                    return eventHashes.indexOf(entry.hash) == -1;
+                });
+
+                console.log('new events', filteredEnrichedDocs.length);
+
+                filteredEnrichedDocs.forEach(function(event) {
+                    console.log(event.title);
+                });
+
+                scraperEventsDB.insert(filteredEnrichedDocs, function (err, newDocs) {
+                });
+            });
+        }
+    });
+};
+
+const processScraperResults = function() {
+    scraperResultsDB.find({}, function(err, docs) {
+        const usedHashes = [];
+        const uniqueResults = [];
+
+        const sortedDocs = docs.sort(function(a, b) {
+            return a.time - b.time;
+        });
+
+        sortedDocs.forEach(function(doc) {
+            if (usedHashes.indexOf(doc.hash) == -1) {
+                usedHashes.push(doc.hash);
+                uniqueResults.push(doc);
+            }
+        });
+
+        scraperProcessedResultsDB.find({}, function(err, processedDocs) {
+            const processedHashes = processedDocs.map(function(entry) {
+                return entry.hash;
+            });
+
+            const unprocessedResults = [];
+
+            uniqueResults.forEach(function(entry) {
+                if (processedHashes.indexOf(entry.hash) == -1) {
+                    unprocessedResults.push(entry);
+                }
+            });
+
+            console.log('processing', unprocessedResults.length);
+
+            unprocessedResults.forEach(function(entry) {
+                processScraperResult(entry);
+            });
+
+            scraperProcessedResultsDB.insert(unprocessedResults, function (err, newDocs) {
+            });
+        });
+    });
+};
 
 const saveCache = function(hash, payload, cb) {
     scraperCacheDB.findOne({ hash: hash }, function (err, doc) {
@@ -152,6 +236,18 @@ const scraperBackend = {
 
         server.route({
             method: 'GET',
+            path:'/scraper/events',
+            handler: function (request, reply) {
+                scraperEventsDB.find({}, function (err, scraperEvents) {
+                    return reply(scraperEvents.sort(function(a, b) {
+                        return a.time - b.time;
+                    }));
+                });
+            }
+        });
+
+        server.route({
+            method: 'GET',
             path: '/scraperFrontend.js',
             handler: {
                 file: './features/scraper/scraperFrontend.js'
@@ -180,6 +276,8 @@ const scraperBackend = {
                 });
             });
         };
+
+        processScraperResults();
 
         setInterval(scrapeJob, 15 * 60 * 1000);
         scrapeJob();
