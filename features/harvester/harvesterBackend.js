@@ -52,6 +52,22 @@ const harvesterBackend = {
             }
         });
 
+        server.route({
+            method: 'POST',
+            path:'/harvest',
+            handler: function (request, reply) {
+                server.inject({
+                    headers: {
+                        authorization: request.headers.authorization
+                    },
+                    method: 'GET',
+                    url: '/scraper/events'
+                }, (res) => {
+                    reply(res.result);
+                });
+            }
+        });
+
         next();
     }
 };
