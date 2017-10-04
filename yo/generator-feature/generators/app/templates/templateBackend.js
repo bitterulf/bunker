@@ -1,5 +1,8 @@
 'use strict';
 
+const Datastore = require('nedb');
+const <%= name %>DB = new Datastore({ filename: './store/<%= name %>', autoload: true });
+
 const <%= name %>Backend = {
     register: function (server, options, next) {
 
@@ -16,6 +19,36 @@ const <%= name %>Backend = {
             path: '/<%= name %>.css',
             handler: {
                 file: './features/<%= name %>/<%= name %>.css'
+            }
+        });
+
+        server.route({
+            method: 'GET',
+            path:'/<%= name %>',
+            handler: function (request, reply) {
+                <%= name %>DB.find({}, function (err, docs) {
+                    return reply(docs);
+                });
+            }
+        });
+
+        server.route({
+            method: 'POST',
+            path:'/<%= name %>',
+            handler: function (request, reply) {
+                <%= name %>DB.insert([request.payload], function (err, newDocs) {
+                    reply({});
+                });
+            }
+        });
+
+        server.route({
+            method: 'DELETE',
+            path:'/<%= name %>/{id}',
+            handler: function (request, reply) {
+                <%= name %>DB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
+                    reply({numRemoved: numRemoved});
+                });
             }
         });
 
