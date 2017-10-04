@@ -66,8 +66,6 @@ Platform.prototype.menu = function(activeEntry) {
         itemGroups[feature.group].push(m('div', m('a', {href: '#!'+feature.route, className: activeEntry == feature.name ? 'active' : ''}, feature.name)));
     });
 
-    console.log(Object.keys(itemGroups));
-
     return m('div.menu', Object.keys(itemGroups).map(function(group) {
         return m('div', {style: 'display: inline-block; vertical-align: text-top;'}, itemGroups[group]);
     }));
