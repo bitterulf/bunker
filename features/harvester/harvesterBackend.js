@@ -1,7 +1,7 @@
 'use strict';
 
 const Datastore = require('nedb');
-const harvesterDB = new Datastore({ filename: './store/harvester', autoload: true });
+const harvesterStepsDB = new Datastore({ filename: './store/harvesterSteps', autoload: true });
 const unirest = require('unirest');
 const cheerio = require('cheerio');
 
@@ -26,9 +26,9 @@ const harvesterBackend = {
 
         server.route({
             method: 'GET',
-            path:'/harvester',
+            path:'/harvester/steps',
             handler: function (request, reply) {
-                harvesterDB.find({}, function (err, docs) {
+                harvesterStepsDB.find({}, function (err, docs) {
                     return reply(docs);
                 });
             }
@@ -36,21 +36,22 @@ const harvesterBackend = {
 
         server.route({
             method: 'POST',
-            path:'/harvester',
+            path:'/harvester/steps',
             handler: function (request, reply) {
-                harvesterDB.insert([request.payload], function (err, newDocs) {
-                    reply({});
-                });
-            }
-        });
+                console.log('tzzz', request);
 
-        server.route({
-            method: 'DELETE',
-            path:'/harvester/{id}',
-            handler: function (request, reply) {
-                harvesterDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
-                    reply({numRemoved: numRemoved});
+                harvesterStepsDB.find({scraperId: request.payload.scraperId}, function (err, docs) {
+                    if (!docs.length) {
+                        return harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function (err, newDocs) {
+                            reply({});
+                        });
+                    }
+
+                    harvesterStepsDB.update({ scraperId: request.payload.scraperId }, { scraperId: request.payload.scraperId, steps:  request.payload.steps }, {}, function (err, numReplaced) {
+                        reply({});
+                    });
                 });
+
             }
         });
 

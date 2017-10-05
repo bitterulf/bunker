@@ -15,6 +15,32 @@ const refreshHarvest = function() {
     })
 };
 
+const refreshHarveststeps = function() {
+    return m.request({
+        method: 'GET',
+        url: '/harvester/steps',
+        withCredentials: true,
+    })
+    .then(function(stepGroups) {
+        const harvestSteps = [];
+
+        stepGroups.forEach(function(stepGroup) {
+
+            console.log('sg', stepGroup);
+
+            stepGroup.steps.forEach(function(step) {
+                harvestSteps.push({
+                    scraperId: stepGroup.scraperId,
+                    selector: step.selector,
+                    field: step.field
+                });
+            });
+        });
+
+        harvestState.harvestSteps = harvestSteps;
+    })
+};
+
 const renderHarvestEntry = function(scraperId, entries) {
     const limitedEntries = entries.length > 10 ? entries.slice(0, 10) : entries;
 
@@ -47,8 +73,6 @@ const renderHarvestEntry = function(scraperId, entries) {
                             });
 
                             if (harvestSteps.length) {
-                                console.log(entry._id, 'harvestSteps', harvestSteps);
-
                                 return m.request({
                                     method: 'POST',
                                     url: '/harvester/test',
@@ -80,7 +104,7 @@ const renderHarvesterDefinition = function() {
     });
 
     return m('div', [
-        harvestState.harvestSteps.map(function(step) {
+        harvestSteps.map(function(step) {
             return m('div', step.scraperId + ' ' + step.selector + ' ' + step.field);
         }),
         m('div', [
@@ -100,13 +124,30 @@ const renderHarvesterDefinition = function() {
                     }
                 }
             }, 'add harvest step')
-        ])
+        ]),
+        m('button', {
+            onclick: function() {
+                return m.request({
+                    method: 'POST',
+                    url: '/harvester/steps',
+                    withCredentials: true,
+                    data: {
+                        scraperId: harvestState.selectedScaperId,
+                        steps: harvestSteps.map(function(step) { return { field: step.field, selector: step.selector } })
+                    }
+                })
+                .then(function(result) {
+                    console.log(result);
+                });
+            }
+        } ,'sync')
     ]);
 };
 
 const harvesterComponent = {
     oninit: function() {
         refreshHarvest();
+        refreshHarveststeps();
     },
     view: function() {
         const renderReadyList = function() {
