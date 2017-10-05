@@ -53,8 +53,8 @@ const harvesterBackend = {
         });
 
         server.route({
-            method: 'POST',
-            path:'/harvest',
+            method: 'GET',
+            path:'/harvest/ready',
             handler: function (request, reply) {
                 server.inject({
                     headers: {
@@ -63,7 +63,17 @@ const harvesterBackend = {
                     method: 'GET',
                     url: '/scraper/events'
                 }, (res) => {
-                    reply(res.result);
+                    const result = {};
+
+                    res.result.forEach(function(entry) {
+                        if (!result[entry.scraperId]) {
+                            result[entry.scraperId] = [];
+                        }
+
+                        result[entry.scraperId].push(entry);
+                    });
+
+                    reply(result);
                 });
             }
         });
