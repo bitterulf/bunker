@@ -32,7 +32,39 @@ const renderHarvestEntry = function(scraperId, entries) {
         m('div', scraperId + '( ' + limitedEntries.length + ' of ' + entries.length + ')' ),
         m('div',
             limitedEntries.map(function(entry) {
-                return m('div', m('a', { href: entry.link }, entry.title));
+                if (!harvestState.selectedScaperId) {
+                    return m('div', [
+                        m('a', { href: entry.link }, entry.title)
+                    ]);
+                }
+
+                return m('div', [
+                    m('a', { href: entry.link }, entry.title),
+                    m('button', {
+                        onclick: function() {
+                            const harvestSteps = harvestState.harvestSteps.filter(function(step) {
+                                return step.scraperId == harvestState.selectedScaperId;
+                            });
+
+                            if (harvestSteps.length) {
+                                console.log(entry._id, 'harvestSteps', harvestSteps);
+
+                                return m.request({
+                                    method: 'POST',
+                                    url: '/harvester/test',
+                                    withCredentials: true,
+                                    data: {
+                                        link: entry.link,
+                                        steps: harvestSteps
+                                    }
+                                })
+                                .then(function(result) {
+                                    console.log(result);
+                                });
+                            }
+                        }
+                    }, 'test')
+                ]);
             })
         )
     ];

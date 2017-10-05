@@ -2,6 +2,8 @@
 
 const Datastore = require('nedb');
 const harvesterDB = new Datastore({ filename: './store/harvester', autoload: true });
+const unirest = require('unirest');
+const cheerio = require('cheerio');
 
 const harvesterBackend = {
     register: function (server, options, next) {
@@ -75,6 +77,29 @@ const harvesterBackend = {
 
                     reply(result);
                 });
+            }
+        });
+
+        server.route({
+            method: 'POST',
+            path:'/harvester/test',
+            handler: function (request, reply) {
+                unirest
+                    .get(request.payload.link)
+                    .end(function (response) {
+                        const $ = cheerio.load(response.body);
+
+                        const result = {};
+
+                        request.payload.steps.forEach(function(step) {
+                            const extraction = $(step.selector).text();
+                            if (extraction) {
+                                result[step.field] = extraction;
+                            }
+                        });
+
+                        reply(result);
+                    });
             }
         });
 
