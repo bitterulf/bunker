@@ -156,7 +156,7 @@ const Scraper = {
             }, 'refresh')]),
             m('input#scraperUrl', {placeholder: 'url'}),
             m('input#scraperSelector', {placeholder: 'selector'}),
-            m('textarea#scraperFields', {placeholder: '{title: \'h1 a\'}'}),
+            m('textarea#scraperFields', {placeholder: '"title":"a","link":"a@href"'}),
             m('button', {
                 onclick: function() {
                     const scraperUrl = document.querySelector('#scraperUrl');
