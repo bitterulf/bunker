@@ -1,7 +1,8 @@
 const harvestState = {
     ready: {},
     selectedScaperId: null,
-    harvestSteps: []
+    harvestSteps: [],
+    harvestEvents: []
 };
 
 const refreshHarvest = function() {
@@ -12,6 +13,17 @@ const refreshHarvest = function() {
     })
     .then(function(result) {
         harvestState.ready = result;
+    })
+};
+
+const refreshHarvestEvents = function() {
+    return m.request({
+        method: 'GET',
+        url: '/harvester/events',
+        withCredentials: true,
+    })
+    .then(function(result) {
+        harvestState.harvestEvents = result;
     })
 };
 
@@ -42,6 +54,11 @@ const refreshHarveststeps = function() {
 };
 
 const renderHarvestEntry = function(scraperId, entries) {
+
+    entries.sort(function(a, b) {
+        return b.time  - a.time;
+    });
+
     const limitedEntries = entries.length > 10 ? entries.slice(0, 10) : entries;
 
     return [
@@ -60,12 +77,12 @@ const renderHarvestEntry = function(scraperId, entries) {
             limitedEntries.map(function(entry) {
                 if (!harvestState.selectedScaperId) {
                     return m('div', [
-                        m('a', { href: entry.link }, entry.title)
+                        m('a', { href: entry.link }, entry.time + ' ' + entry.title)
                     ]);
                 }
 
                 return m('div', [
-                    m('a', { href: entry.link }, entry.title),
+                    m('a', { href: entry.link }, entry.time + ' ' + entry.title),
                     m('button', {
                         onclick: function() {
                             const harvestSteps = harvestState.harvestSteps.filter(function(step) {
@@ -104,8 +121,19 @@ const renderHarvesterDefinition = function() {
     });
 
     return m('div', [
-        harvestSteps.map(function(step) {
-            return m('div', step.scraperId + ' ' + step.selector + ' ' + step.field);
+        harvestSteps.map(function(step, stepIndex) {
+            return m('div', [
+                step.scraperId + ' ' + step.selector + ' ' + step.field,
+                m('button', {
+                    onclick: function() {
+                        const filtered = harvestState.harvestSteps.filter(function(harvestStep) {
+                            return !(harvestStep.scraperId == step.scraperId && harvestStep.selector == step.selector && harvestStep.field == step.field);
+                        });
+
+                        harvestState.harvestSteps = filtered;
+                    }
+                }, 'remove step')
+            ]);
         }),
         m('div', [
             m('input#harvestStepSelector', { placeholder: 'cssSelector' }),
@@ -175,8 +203,8 @@ const harvesterComponent = {
             m('button', {
                 onclick: function() {
                     return m.request({
-                        method: 'GET',
-                        url: '/harvest/ready',
+                        method: 'POST',
+                        url: '/harvester/harvest',
                         withCredentials: true,
                         data: {}
                     })
@@ -189,4 +217,47 @@ const harvesterComponent = {
     }
 };
 
-platform.register('harvester', [{name: 'harvester', route: '/harvester', component: harvesterComponent}], '/harvester.css');
+const renderEventsList = function() {
+    const limitedEvents = harvestState.harvestEvents.slice(0, 10);
+
+    return limitedEvents.map(function(event) {
+        return m('div', [
+            m('span', { title: JSON.stringify(event.steps) }, event.scraperEvent.time + ' ' + event.scraperEvent.link),
+            m('button', {
+                onclick: function() {
+                    return m.request({
+                        method: 'POST',
+                        url: '/harvester/collect',
+                        withCredentials: true,
+                        data: {
+                            id: event._id
+                        }
+                    })
+                    .then(function(result) {
+                        console.log(result);
+                        refreshHarvestEvents();
+                    });
+                }
+            }, 'collect')
+        ]);
+    });
+};
+
+const harvesterEventsComponent = {
+    oninit: function() {
+        refreshHarvestEvents();
+    },
+    view: function() {
+        return  m('.harvesterFeature', [
+            platform.title('harvester events'),
+            platform.menu('harvester events'),
+            harvestState.harvestEvents.length,
+            renderEventsList()
+        ]);
+    }
+};
+
+platform.register('harvester', [
+    {name: 'harvester', route: '/harvester', component: harvesterComponent},
+    {name: 'harvester events', route: '/harvester/events', component: harvesterEventsComponent}
+], '/harvester.css');

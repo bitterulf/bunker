@@ -2,8 +2,11 @@
 
 const Datastore = require('nedb');
 const harvesterStepsDB = new Datastore({ filename: './store/harvesterSteps', autoload: true });
+const harvesterEventsDB = new Datastore({ filename: './store/harvesterEvents', autoload: true });
+const harvesterResultsDB = new Datastore({ filename: './store/harvesterResults', autoload: true });
 const unirest = require('unirest');
 const cheerio = require('cheerio');
+const trim = require('trim');
 
 const harvesterBackend = {
     register: function (server, options, next) {
@@ -38,8 +41,6 @@ const harvesterBackend = {
             method: 'POST',
             path:'/harvester/steps',
             handler: function (request, reply) {
-                console.log('tzzz', request);
-
                 harvesterStepsDB.find({scraperId: request.payload.scraperId}, function (err, docs) {
                     if (!docs.length) {
                         return harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function (err, newDocs) {
@@ -83,6 +84,65 @@ const harvesterBackend = {
 
         server.route({
             method: 'POST',
+            path:'/harvester/harvest',
+            handler: function (request, reply) {
+                harvesterStepsDB.find({}, function (err, harvesterSteps) {
+                    harvesterEventsDB.find({}, function (err, harvesterEvents) {
+                        const harvestedScraperEventIds = [];
+
+                        harvesterEvents.forEach(function(harvesterEvent) {
+                            harvestedScraperEventIds.push(harvesterEvent.scraperEvent._id);
+                        });
+
+                        server.inject({
+                            headers: {
+                                authorization: request.headers.authorization
+                            },
+                            method: 'GET',
+                            url: '/scraper/events'
+                        }, (res) => {
+                            const harvesterStepsByScraperId = {};
+
+                            harvesterSteps.forEach(function(harvesterStepGroup) {
+                                harvesterStepsByScraperId[harvesterStepGroup.scraperId] = harvesterStepGroup.steps;
+                            });
+
+                            const result = {};
+
+                            res.result.forEach(function(entry) {
+                                if (!result[entry.scraperId]) {
+                                    result[entry.scraperId] = [];
+                                }
+
+                                result[entry.scraperId].push(entry);
+                            });
+
+                            const harvesterEvents = [];
+
+                            Object.keys(result).forEach(function(scraperId) {
+                                result[scraperId].forEach(function(scraperEvent) {
+                                    if (scraperEvent.title && scraperEvent.link && harvestedScraperEventIds.indexOf(scraperEvent._id) == -1) {
+                                        harvesterEvents.push({
+                                            scraperEvent: scraperEvent,
+                                            steps: harvesterStepsByScraperId[scraperId]
+                                        });
+                                    }
+                                });
+                            });
+
+                            harvesterEventsDB.insert(harvesterEvents, function (err, newDocs) {
+                                reply({
+                                    processed: harvesterEvents.length
+                                });
+                            });
+                        });
+                    });
+                });
+            }
+        });
+
+        server.route({
+            method: 'POST',
             path:'/harvester/test',
             handler: function (request, reply) {
                 unirest
@@ -95,12 +155,67 @@ const harvesterBackend = {
                         request.payload.steps.forEach(function(step) {
                             const extraction = $(step.selector).text();
                             if (extraction) {
-                                result[step.field] = extraction;
+                                result[step.field] = trim(extraction);
                             }
                         });
 
                         reply(result);
                     });
+            }
+        });
+
+        server.route({
+            method: 'GET',
+            path:'/harvester/events',
+            handler: function (request, reply) {
+                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                    const harvestedEventIds = [];
+
+                    harvesterResults.forEach(function(harvesterResult) {
+                        harvestedEventIds.push(harvesterResult.harvesterEventId);
+                    });
+
+                    harvesterEventsDB.find({}, function (err, docs) {
+                        reply(docs.filter(function(doc) {
+                            return harvestedEventIds.indexOf(doc._id) == -1;
+                        }));
+                    });
+                });
+            }
+        });
+
+        server.route({
+            method: 'POST',
+            path:'/harvester/collect',
+            handler: function (request, reply) {
+                harvesterEventsDB.findOne({_id: request.payload.id}, function (err, doc) {
+
+                    unirest
+                        .get(doc.scraperEvent.link)
+                        .end(function (response) {
+                            const $ = cheerio.load(response.body);
+
+                            const result = {
+                                harvesterEventId: doc._id,
+                                link: doc.scraperEvent.link,
+                                scraperId: doc.scraperEvent.scraperId,
+                                scraperTime: doc.scraperEvent.time,
+                                time: Date.now(),
+                                data: {}
+                            };
+
+                            doc.steps.forEach(function(step) {
+                                const extraction = $(step.selector).text();
+                                if (extraction) {
+                                    result.data[step.field] = trim(extraction);
+                                }
+                            });
+
+                            harvesterResultsDB.insert(result, function (err, newDoc) {
+                                reply(newDoc);
+                            });
+                        });
+                });
             }
         });
 
