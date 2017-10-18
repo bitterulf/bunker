@@ -1,0 +1,1 @@
+window.iron = require('iron');
