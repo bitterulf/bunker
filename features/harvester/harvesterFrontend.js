@@ -2,7 +2,8 @@ const harvestState = {
     ready: {},
     selectedScaperId: null,
     harvestSteps: [],
-    harvestEvents: []
+    harvestEvents: [],
+    harvestEventsPage: 1
 };
 
 const refreshHarvest = function() {
@@ -21,6 +22,9 @@ const refreshHarvestEvents = function() {
         method: 'GET',
         url: '/harvester/events',
         withCredentials: true,
+        data: {
+            page: harvestState.harvestEventsPage
+        }
     })
     .then(function(result) {
         harvestState.harvestEvents = result;
@@ -218,29 +222,36 @@ const harvesterComponent = {
 };
 
 const renderEventsList = function() {
-    const limitedEvents = harvestState.harvestEvents.slice(0, 10);
 
-    return limitedEvents.map(function(event) {
-        return m('div', [
-            m('span', { title: JSON.stringify(event.steps) }, event.scraperEvent.time + ' ' + event.scraperEvent.link),
-            m('button', {
-                onclick: function() {
-                    return m.request({
-                        method: 'POST',
-                        url: '/harvester/collect',
-                        withCredentials: true,
-                        data: {
-                            id: event._id
-                        }
-                    })
-                    .then(function(result) {
-                        console.log(result);
-                        refreshHarvestEvents();
-                    });
-                }
-            }, 'collect')
-        ]);
-    });
+    return [
+        m('div', 'page ' + harvestState.harvestEventsPage),
+        harvestState.harvestEvents.map(function(event) {
+            return m('div', [
+                m('span', { title: JSON.stringify(event.steps) }, event.scraperEvent.time + ' ' + event.scraperEvent.link),
+                m('button', {
+                    onclick: function() {
+                        return m.request({
+                            method: 'POST',
+                            url: '/harvester/collect',
+                            withCredentials: true,
+                            data: {
+                                id: event._id
+                            }
+                        })
+                        .then(function(result) {
+                            refreshHarvestEvents();
+                        });
+                    }
+                }, 'collect')
+            ]);
+        }),
+        m('button', {
+            onclick: function() {
+                harvestState.harvestEventsPage++;
+                refreshHarvestEvents();
+            }
+        }, 'next')
+    ];
 };
 
 const harvesterEventsComponent = {
@@ -251,7 +262,6 @@ const harvesterEventsComponent = {
         return  m('.harvesterFeature', [
             platform.title('harvester events'),
             platform.menu('harvester events'),
-            harvestState.harvestEvents.length,
             renderEventsList()
         ]);
     }

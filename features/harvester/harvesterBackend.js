@@ -168,6 +168,8 @@ const harvesterBackend = {
             method: 'GET',
             path:'/harvester/events',
             handler: function (request, reply) {
+                const startIndex = (request.query.page - 1) * 10;
+
                 harvesterResultsDB.find({}, function (err, harvesterResults) {
                     const harvestedEventIds = [];
 
@@ -176,9 +178,11 @@ const harvesterBackend = {
                     });
 
                     harvesterEventsDB.find({}, function (err, docs) {
-                        reply(docs.filter(function(doc) {
+                        const filtered = docs.filter(function(doc) {
                             return harvestedEventIds.indexOf(doc._id) == -1;
-                        }));
+                        })
+
+                        reply(filtered.slice(startIndex, startIndex + 10));
                     });
                 });
             }
