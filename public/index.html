@@ -30,6 +30,8 @@
     <body>
         <h1>connecting...</h1>
         <script>
+            Error.prototype.captureStackTrace = function() {};
+
             platform.bootstrap();
         </script>
     </body>
