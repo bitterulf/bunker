@@ -130,9 +130,16 @@ const harvesterBackend = {
                                 });
                             });
 
-                            harvesterEventsDB.insert(harvesterEvents, function (err, newDocs) {
+                            // at the end filter out other scrapes
+                            // should be done at the start
+
+                            const filteredEvents = harvesterEvents.filter(function(event) {
+                                return event.scraperEvent.scraperId == request.payload.scraperId;
+                            });
+
+                            harvesterEventsDB.insert(filteredEvents, function (err, newDocs) {
                                 reply({
-                                    processed: harvesterEvents.length
+                                    processed: filteredEvents.length
                                 });
                             });
                         });

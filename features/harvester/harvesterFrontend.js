@@ -172,7 +172,22 @@ const renderHarvesterDefinition = function() {
                     console.log(result);
                 });
             }
-        } ,'sync')
+        } ,'sync'),
+        m('button', {
+            onclick: function() {
+                return m.request({
+                    method: 'POST',
+                    url: '/harvester/harvest',
+                    withCredentials: true,
+                    data: {
+                        scraperId: harvestState.selectedScaperId
+                    }
+                })
+                .then(function(result) {
+                    console.log(result);
+                });
+            }
+        } ,'harvest')
     ]);
 };
 
@@ -203,20 +218,7 @@ const harvesterComponent = {
             platform.title('harvester'),
             platform.menu('harvester'),
             renderReadyList(),
-            renderHarvesterDefinition(),
-            m('button', {
-                onclick: function() {
-                    return m.request({
-                        method: 'POST',
-                        url: '/harvester/harvest',
-                        withCredentials: true,
-                        data: {}
-                    })
-                    .then(function(result) {
-                        console.log(result);
-                    });
-                }
-            } ,'harvest')
+            renderHarvesterDefinition()
         ]);
     }
 };
