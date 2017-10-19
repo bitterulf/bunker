@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prestart": "browserify ./libs.js > ./public/libs.js && node fixLibs.js",
+    "prestart": "node node_modules/browserify/bin/cmd.js ./libs.js > ./public/libs.js && node fixLibs.js",
     "start": "node --expose-gc index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docker-build": "docker build -t bunker .",
@@ -17,9 +17,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "browserify": "^14.4.0",
     "dotenv": "^4.0.0",
     "hapi-auth-basic": "^4.2.0",
     "inert": "^4.2.1",
+    "iron": "^5.0.1",
     "joi": "^11.0.1",
     "md5": "^2.2.1",
     "nedb": "^1.8.0",
