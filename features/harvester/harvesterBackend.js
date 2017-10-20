@@ -196,6 +196,18 @@ const harvesterBackend = {
         });
 
         server.route({
+            method: 'GET',
+            path:'/harvest/results',
+            handler: function (request, reply) {
+                const startIndex = (request.query.page - 1) * 10;
+
+                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                    reply(harvesterResults.slice(startIndex, startIndex + 10));
+                });
+            }
+        });
+
+        server.route({
             method: 'POST',
             path:'/harvester/collect',
             handler: function (request, reply) {

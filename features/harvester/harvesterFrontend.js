@@ -3,7 +3,9 @@ const harvestState = {
     selectedScaperId: null,
     harvestSteps: [],
     harvestEvents: [],
-    harvestEventsPage: 1
+    harvestEventsPage: 1,
+    harvestResultsPage: 1,
+    harvestResults: []
 };
 
 const refreshHarvest = function() {
@@ -14,6 +16,22 @@ const refreshHarvest = function() {
     })
     .then(function(result) {
         harvestState.ready = result;
+    })
+};
+
+const refreshHarvestResults = function() {
+    return m.request({
+        method: 'GET',
+        url: '/harvest/results',
+        withCredentials: true,
+        data: {
+            page: harvestState.harvestResultsPage
+        }
+    })
+    .then(function(result) {
+        harvestState.harvestResults = result;
+
+        console.log('nice', result);
     })
 };
 
@@ -249,6 +267,12 @@ const renderEventsList = function() {
         }),
         m('button', {
             onclick: function() {
+                harvestState.harvestEventsPage--;
+                refreshHarvestEvents();
+            }
+        }, 'prev'),
+        m('button', {
+            onclick: function() {
                 harvestState.harvestEventsPage++;
                 refreshHarvestEvents();
             }
@@ -269,7 +293,45 @@ const harvesterEventsComponent = {
     }
 };
 
+const renderResultsList = function() {
+
+    return [
+        m('div', 'page ' + harvestState.harvestResultsPage),
+        harvestState.harvestResults.map(function(result) {
+            return m('div', [
+                m('a', { title: JSON.stringify(result.data), href: result.link }, result.link)
+            ]);
+        }),
+        m('button', {
+            onclick: function() {
+                harvestState.harvestResultsPage--;
+                refreshHarvestResults();
+            }
+        }, 'prev'),
+        m('button', {
+            onclick: function() {
+                harvestState.harvestResultsPage++;
+                refreshHarvestResults();
+            }
+        }, 'next')
+    ];
+};
+
+const harvesterResultsComponent = {
+    oninit: function() {
+        refreshHarvestResults();
+    },
+    view: function() {
+        return  m('.harvesterFeature', [
+            platform.title('harvester results'),
+            platform.menu('harvester results'),
+            renderResultsList()
+        ]);
+    }
+};
+
 platform.register('harvester', [
     {name: 'harvester', route: '/harvester', component: harvesterComponent},
-    {name: 'harvester events', route: '/harvester/events', component: harvesterEventsComponent}
+    {name: 'harvester events', route: '/harvester/events', component: harvesterEventsComponent},
+    {name: 'harvester results', route: '/harvester/results', component: harvesterResultsComponent}
 ], '/harvester.css');
