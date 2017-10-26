@@ -1,10 +1,7 @@
 <html>
     <head>
-        <script src='libs.js'></script>
-        <script src='/primus/primus.js'></script>
         <script src='js/mithril.js'></script>
         <script src='ui.js'></script>
-        <script src='platform.js'></script>
         <style>
             body {
                 font-family: sans-serif
@@ -26,14 +23,16 @@
                 text-decoration: none;
             }
         </style>
-        <title>BUNKER</title>
+        <title>kitchen sink</title>
     </head>
     <body>
-        <h1>connecting...</h1>
         <script>
-            Error.prototype.captureStackTrace = function() {};
-
-            platform.bootstrap();
+            m.render(document.body,
+                m('div', [
+                    m('h1', 'Button'),
+                    m(Button, {caption: 'caption'})
+                ])
+            );
         </script>
     </body>
 </html>
