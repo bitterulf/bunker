@@ -27,11 +27,28 @@
     </head>
     <body>
         <script>
-            m.render(document.body,
-                m('div', [
-                    m('h1', 'Button'),
-                    m(Button, {caption: 'caption'})
-                ])
+            const textLengthValidator = function(value, cb) {
+                if (value.length < 1) {
+                    return cb('too short');
+                } else if (value.length > 10) {
+                    return cb('too long');
+                }
+                cb();
+            };
+
+            m.mount(document.body, {
+                    view: function() {
+                        return m('div', [
+                            m('h1', 'Button'),
+                            m(Button, {caption: 'caption'}),
+                            m('h1', 'Input'),
+                            m(TextInput, {
+                                caption: 'caption',
+                                validator: textLengthValidator
+                            })
+                        ]);
+                    }
+                }
             );
         </script>
     </body>
