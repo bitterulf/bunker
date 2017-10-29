@@ -99,3 +99,98 @@ const TextInput = {
         ]);
     }
 };
+
+const QueryInput = {
+    oninit: function(vnode) {
+        vnode.state.valid1 = false;
+        vnode.state.lastValidObject1 = {};
+
+        vnode.state.valid2 = false;
+        vnode.state.lastValidObject2 = {};
+    },
+    oncreate: function(vnode) {
+    },
+    view: function (vnode) {
+        let color = 'black';
+
+        return [
+            m('div', [
+                m('textarea', {
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: vnode.state.valid1 ? 'green' : 'red',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    },
+                    onkeyup: function() {
+                        const value = this.value;
+                        try {
+                            const parsedValue = JSON.parse(value);
+                            vnode.state.valid1 = true;
+                            vnode.state.lastValidObject1 = parsedValue;
+                        } catch (e) {
+                            vnode.state.valid1 = false;
+                        }
+                    }
+                }),
+                m('textarea', {
+                    readonly: true,
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: 'white',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    }
+                }, JSON.stringify(vnode.state.lastValidObject1))
+            ]),
+            m('div', [
+                m('textarea', {
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: vnode.state.valid2 ? 'green' : 'red',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    },
+                    onkeyup: function() {
+                        const value = this.value;
+                        try {
+                            const parsedValue = JSON.parse(value);
+                            vnode.state.valid2 = true;
+                            vnode.state.lastValidObject2 = parsedValue;
+                        } catch (e) {
+                            vnode.state.valid2 = false;
+                        }
+                    }
+                }),
+                m('textarea', {
+                    readonly: true,
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: 'white',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    }
+                }, JSON.stringify(vnode.state.lastValidObject2))
+            ]),
+            m('div', [
+                m('button', { onclick: function() {
+                    if (vnode.state.valid1 && vnode.state.valid2) {
+                        const query = new mingo.Query(vnode.state.lastValidObject1);
+
+                        alert(
+                            query.test(vnode.state.lastValidObject2)
+                        );
+                    }
+                }}, 'test')
+            ])
+        ];
+    }
+};

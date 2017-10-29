@@ -14,3 +14,5 @@ window.decrypt = function(text, password){
     dec += decipher.final('utf8');
     return dec;
 };
+
+window.mingo = require('mingo');

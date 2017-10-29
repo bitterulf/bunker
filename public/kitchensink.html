@@ -1,5 +1,6 @@
 <html>
     <head>
+        <script src='libs.js'></script>
         <script src='js/mithril.js'></script>
         <script src='ui.js'></script>
         <style>
@@ -45,7 +46,9 @@
                             m(TextInput, {
                                 caption: 'caption',
                                 validator: textLengthValidator
-                            })
+                            }),
+                            m('h1', 'QueryInput'),
+                            m(QueryInput, {})
                         ]);
                     }
                 }

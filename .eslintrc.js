@@ -2,7 +2,7 @@ module.exports = {
     "globals": {
         "m": true,
         "platform": true,
-        "iron": true
+        "mingo": true
     },
     "parserOptions": {
         "ecmaVersion": 6
