@@ -8,10 +8,9 @@ const refreshMemory = function() {
         method: 'GET',
         url: '/memory',
         withCredentials: true,
-    })
-    .then(function(result) {
+    }).then(function(result) {
         memoryState.memory = result;
-    })
+    });
 };
 
 const Memory = {

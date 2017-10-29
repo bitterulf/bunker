@@ -13,12 +13,11 @@ const refreshNotes = function() {
         method: 'GET',
         url: '/notes',
         withCredentials: true,
-    })
-    .then(function(result) {
+    }).then(function(result) {
         notesState.notes = result.sort(function(a, b) {
             return a.time - b.time;
         }).reverse();
-    })
+    });
 };
 
 const renderNote = function(note) {
@@ -28,8 +27,7 @@ const renderNote = function(note) {
                 method: 'DELETE',
                 url: '/note/'+note._id,
                 withCredentials: true,
-            })
-            .then(function() {
+            }).then(function() {
                 refreshNotes();
             });
         }
@@ -76,15 +74,18 @@ const Notes = {
                             url: '/note',
                             withCredentials: true,
                             data: { message: noteContent, time: Date.now() }
-                        })
-                        .then(function() {
+                        }).then(function() {
                             inputField.value = '';
                             refreshNotes();
                         });
                     };
 
+                    console.log(notesState.secret, inputField.value);
                     if (notesState.secret.length >= 5) {
+                        console.log('seal it');
+                        console.log(ironOptions, iron);
                         iron.seal({ content: inputField.value }, notesState.secret, ironOptions, function (err, sealed) {
+                            console.log('return', err, sealed);
                             if (!err) {
                                 saveNote(sealed);
                             }

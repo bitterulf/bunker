@@ -20,13 +20,13 @@ const processScraperResult = function(scraperResult) {
         if (doc) {
             console.log('processing', scraperResult.scraperId);
             const enrichedDocs = doc.payload
-            .filter(function(entry) { return entry.title && entry.link; })
-            .map(function(entry) {
-                entry.hash = md5(entry.link);
-                entry.scraperId = scraperResult.scraperId;
-                entry.time = scraperResult.time;
-                return entry;
-            });
+                .filter(function(entry) { return entry.title && entry.link; })
+                .map(function(entry) {
+                    entry.hash = md5(entry.link);
+                    entry.scraperId = scraperResult.scraperId;
+                    entry.time = scraperResult.time;
+                    return entry;
+                });
 
             scraperEventsDB.find({}, function(err, scraperEvents) {
                 const eventHashes = [];
@@ -35,7 +35,7 @@ const processScraperResult = function(scraperResult) {
 
                 scraperEvents.forEach(function(event) {
                     eventHashes.push(event.hash);
-                })
+                });
 
                 const filteredEnrichedDocs = enrichedDocs.filter(function(entry) {
                     return eventHashes.indexOf(entry.hash) == -1;
@@ -47,7 +47,7 @@ const processScraperResult = function(scraperResult) {
                     console.log(event.title);
                 });
 
-                scraperEventsDB.insert(filteredEnrichedDocs, function (err, newDocs) {
+                scraperEventsDB.insert(filteredEnrichedDocs, function () {
                 });
             });
         }
@@ -89,7 +89,7 @@ const processScraperResults = function() {
                 processScraperResult(entry);
             });
 
-            scraperProcessedResultsDB.insert(unprocessedResults, function (err, newDocs) {
+            scraperProcessedResultsDB.insert(unprocessedResults, function () {
             });
         });
     });
@@ -102,7 +102,7 @@ const saveCache = function(hash, payload, cb) {
         }
         else {
             const cacheDoc = {hash: hash, payload: payload, time: Date.now()};
-            scraperCacheDB.insert(cacheDoc, function (err, newDocs) {
+            scraperCacheDB.insert(cacheDoc, function () {
                 return cb();
             });
         }
@@ -126,13 +126,13 @@ const scrapeDump = function(scraper, cb) {
                     scraperId: scraper._id
                 };
 
-                scraperResultsDB.insert([doc], function (err, newDocs) {
+                scraperResultsDB.insert([doc], function () {
 
                     return cb(null);
                 });
             });
         }
-    })
+    });
 };
 
 const scraperBackend = {
@@ -181,7 +181,7 @@ const scraperBackend = {
             method: 'POST',
             path:'/scrapers/import',
             handler: function (request, reply) {
-                scraperDB.insert(request.payload, function (err, newDocs) {
+                scraperDB.insert(request.payload, function () {
                     reply({});
                 });
             }
@@ -201,7 +201,7 @@ const scraperBackend = {
             method: 'POST',
             path:'/scraper',
             handler: function (request, reply) {
-                scraperDB.insert([request.payload], function (err, newDocs) {
+                scraperDB.insert([request.payload], function () {
                     reply({});
                 });
             }

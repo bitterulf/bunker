@@ -19,7 +19,7 @@ const notesBackend = {
             method: 'POST',
             path:'/note',
             handler: function (request, reply) {
-                notesDB.insert([request.payload], function (err, newDocs) {
+                notesDB.insert([request.payload], function () {
                     reply({});
                 });
             }

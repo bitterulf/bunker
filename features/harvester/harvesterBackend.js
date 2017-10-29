@@ -43,12 +43,12 @@ const harvesterBackend = {
             handler: function (request, reply) {
                 harvesterStepsDB.find({scraperId: request.payload.scraperId}, function (err, docs) {
                     if (!docs.length) {
-                        return harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function (err, newDocs) {
+                        return harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function () {
                             reply({});
                         });
                     }
 
-                    harvesterStepsDB.update({ scraperId: request.payload.scraperId }, { scraperId: request.payload.scraperId, steps:  request.payload.steps }, {}, function (err, numReplaced) {
+                    harvesterStepsDB.update({ scraperId: request.payload.scraperId }, { scraperId: request.payload.scraperId, steps:  request.payload.steps }, {}, function () {
                         reply({});
                     });
                 });
@@ -137,7 +137,7 @@ const harvesterBackend = {
                                 return event.scraperEvent.scraperId == request.payload.scraperId;
                             });
 
-                            harvesterEventsDB.insert(filteredEvents, function (err, newDocs) {
+                            harvesterEventsDB.insert(filteredEvents, function () {
                                 reply({
                                     processed: filteredEvents.length
                                 });
@@ -187,7 +187,7 @@ const harvesterBackend = {
                     harvesterEventsDB.find({}, function (err, docs) {
                         const filtered = docs.filter(function(doc) {
                             return harvestedEventIds.indexOf(doc._id) == -1;
-                        })
+                        });
 
                         reply(filtered.slice(startIndex, startIndex + 10));
                     });

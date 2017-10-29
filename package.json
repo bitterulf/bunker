@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "node node_modules/eslint/bin/eslint.js features/*/*.js",
+    "precommit": "npm run lint",
+    "prepush": "npm run lint",
     "prestart": "node node_modules/browserify/bin/cmd.js ./libs.js > ./public/libs.js && node fixLibs.js",
     "start": "node --expose-gc index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -33,6 +36,8 @@
     "x-ray": "^2.3.2"
   },
   "devDependencies": {
-    "hapi": "^16.6.0"
+    "eslint": "^4.10.0",
+    "hapi": "^16.6.0",
+    "husky": "^0.14.3"
   }
 }
