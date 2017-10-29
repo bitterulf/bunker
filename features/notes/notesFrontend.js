@@ -3,11 +3,6 @@ const notesState = {
     secret: '',
 };
 
-const ironOptions = JSON.parse(JSON.stringify(iron.defaults));
-
-ironOptions.encryption.minPasswordlength = 5;
-ironOptions.integrity.minPasswordlength = 5;
-
 const refreshNotes = function() {
     return m.request({
         method: 'GET',
@@ -35,19 +30,11 @@ const renderNote = function(note) {
 
     const decryptButton = m('button', {
         onclick: function() {
-            iron.unseal(note.message, notesState.secret, ironOptions, function (err, unsealed) {
-                if (!err) {
-                    alert(unsealed.content);
-                }
-            });
+            alert(window.decrypt(note.message, notesState.secret));
         }
     }, 'decrypt');
 
-    if (note.message.indexOf('Fe26.2**') > -1) {
-        return m('div', [deleteButton, decryptButton], 'encrypted');
-    }
-
-    return m('div', [deleteButton], note.message);
+    return m('div', [deleteButton, decryptButton], note.message);
 };
 
 const Notes = {
@@ -60,6 +47,7 @@ const Notes = {
             platform.menu('notes'),
             m('input#noteInput'),
             m('input#secretInput', {
+                type: 'password',
                 onkeyup: function(ev) {
                     notesState.secret = ev.target.value;
                 }
@@ -80,16 +68,10 @@ const Notes = {
                         });
                     };
 
-                    console.log(notesState.secret, inputField.value);
                     if (notesState.secret.length >= 5) {
-                        console.log('seal it');
-                        console.log(ironOptions, iron);
-                        iron.seal({ content: inputField.value }, notesState.secret, ironOptions, function (err, sealed) {
-                            console.log('return', err, sealed);
-                            if (!err) {
-                                saveNote(sealed);
-                            }
-                        });
+                        const encrypted = window.encrypt(inputField.value, notesState.secret);
+                        saveNote(encrypted);
+
                     } else {
                         saveNote(inputField.value);
                     }
