@@ -2,6 +2,7 @@
     <head>
         <script src='libs.js'></script>
         <script src='js/mithril.js'></script>
+        <script src='js/handlebars-v4.0.11.js'></script>
         <script src='ui.js'></script>
         <style>
             body {
@@ -48,7 +49,9 @@
                                 validator: textLengthValidator
                             }),
                             m('h1', 'QueryInput'),
-                            m(QueryInput, {})
+                            m(QueryInput, {}),
+                            m('h1', 'RenderInput'),
+                            m(RenderInput, {})
                         ]);
                     }
                 }

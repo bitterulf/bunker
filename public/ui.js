@@ -194,3 +194,92 @@ const QueryInput = {
         ];
     }
 };
+
+const RenderInput = {
+    oninit: function(vnode) {
+        vnode.state.valid1 = false;
+        vnode.state.lastValidObject1 = {};
+        vnode.state.templateValid = true;
+        vnode.state.template = '';
+        vnode.state.output = '';
+    },
+    oncreate: function(vnode) {
+    },
+    view: function (vnode) {
+        let color = 'black';
+
+        return [
+            m('div', [
+                m('textarea', {
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: vnode.state.valid1 ? 'green' : 'red',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    },
+                    onkeyup: function() {
+                        const value = this.value;
+                        try {
+                            const parsedValue = JSON.parse(value);
+                            vnode.state.valid1 = true;
+                            vnode.state.lastValidObject1 = parsedValue;
+                        } catch (e) {
+                            vnode.state.valid1 = false;
+                        }
+                    }
+                }),
+                m('textarea', {
+                    readonly: true,
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: 'white',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    }
+                }, JSON.stringify(vnode.state.lastValidObject1)),
+                m('textarea', {
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        border: 'solid black 1px',
+                        background: vnode.state.templateValid ? 'green' : 'red',
+                        cursor: 'pointer'
+                    },
+                    onkeyup: function() {
+                        const source = this.value;
+                        try {
+                            const template = Handlebars.compile(source);
+                            vnode.state.template = source;
+                            vnode.state.templateValid = true;
+                            vnode.state.output = template(vnode.state.lastValidObject1);
+                        } catch(e) {
+                            vnode.state.templateValid = false;
+                            vnode.state.output = '';
+                        }
+                    }
+                }),
+                m('textarea', {
+                    readonly: true,
+                    rows: 10,
+                    cols: 20,
+                    style: {
+                        color: color,
+                        background: 'white',
+                        border: 'solid black 1px',
+                        cursor: 'pointer'
+                    }
+                }, vnode.state.output),
+                m('div', {
+                    style: {
+                        border: '1px dashed black'
+                    }
+                }, m.trust(vnode.state.output))
+            ])
+        ];
+    }
+};
