@@ -130,6 +130,9 @@ const QueryInput = {
                             const parsedValue = JSON.parse(value);
                             vnode.state.valid1 = true;
                             vnode.state.lastValidObject1 = parsedValue;
+                            if (vnode.attrs.onChange) {
+                                vnode.attrs.onChange(parsedValue);
+                            }
                         } catch (e) {
                             vnode.state.valid1 = false;
                         }
@@ -257,7 +260,11 @@ const RenderInput = {
                             vnode.state.template = source;
                             vnode.state.templateValid = true;
                             vnode.state.output = template(vnode.state.lastValidObject1);
+                            if (vnode.attrs.onChange) {
+                                vnode.attrs.onChange(source);
+                            }
                         } catch(e) {
+                            console.log('miss', e);
                             vnode.state.templateValid = false;
                             vnode.state.output = '';
                         }

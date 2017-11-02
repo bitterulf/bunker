@@ -2,7 +2,9 @@ module.exports = {
     "globals": {
         "m": true,
         "platform": true,
-        "mingo": true
+        "mingo": true,
+        "QueryInput": true,
+        "RenderInput": true
     },
     "parserOptions": {
         "ecmaVersion": 6
