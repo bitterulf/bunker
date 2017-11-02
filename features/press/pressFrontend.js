@@ -19,29 +19,52 @@ const refreshPressLines = function() {
 const pressLineComponent = {
     oninit: function() {
         refreshPressLines();
+        refreshPressQueries();
+        refreshPressTemplates();
     },
     view: function() {
         return  m('.pressFeature', [
             platform.title('press lines'),
             platform.menu('press lines'),
-            m('input#templateInput'),
+            m('select#querySelect', pressState.queries.map(function(query) {
+                return m('option', {value: query._id}, query.name);
+            })),
+            m('select#templateSelect', pressState.templates.map(function(template) {
+                return m('option', {value: template._id}, template.name);
+            })),
+            m('input#lineInput'),
             m('button', {
                 onclick: function() {
-                    const templateInput = document.querySelector('#templateInput');
+                    const lineInput = document.querySelector('#lineInput');
+                    const querySelect = document.querySelector('#querySelect');
+                    const templateSelect = document.querySelector('#templateSelect');
+                    const queryId = querySelect.children[querySelect.selectedIndex].value;
+                    const templateId = templateSelect.children[templateSelect.selectedIndex].value;
+                    const query = pressState.queries.find(function(query) { return query._id == queryId; });
+                    const template = pressState.templates.find(function(template) { return template._id == templateId; });
 
                     return m.request({
                         method: 'POST',
                         url: '/press/line',
                         withCredentials: true,
-                        data: { template: templateInput.value, time: Date.now() }
+                        data: {
+                            name: lineInput.value,
+                            time: Date.now(),
+                            query: query,
+                            template: template
+                        }
                     }).then(function() {
-                        templateInput.value = '';
+                        lineInput.value = '';
                         refreshPressLines();
                     });
                 }
             }, 'send'),
             m('div', pressState.lines.map(function(line) {
-                return m('div', line.template);
+                return m('div', [
+                    m('span', line.name + ' : '),
+                    m('span', { title: JSON.stringify(line.query.query) }, line.query.name + ' => '),
+                    m('span', { title: line.template.template }, line.template.name)
+                ]);
             }))
         ]);
     }
