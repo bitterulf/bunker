@@ -1,7 +1,18 @@
 const pressState = {
     lines: [],
     queries: [],
-    templates: []
+    templates: [],
+    scraperIds: []
+};
+
+const refreshScraperIds = function() {
+    return m.request({
+        method: 'GET',
+        url: '/harvest/results/scraperIds',
+        withCredentials: true,
+    }).then(function(result) {
+        pressState.scraperIds = result;
+    });
 };
 
 const refreshPressLines = function() {
@@ -21,6 +32,7 @@ const pressLineComponent = {
         refreshPressLines();
         refreshPressQueries();
         refreshPressTemplates();
+        refreshScraperIds();
     },
     view: function() {
         return  m('.pressFeature', [
@@ -32,14 +44,19 @@ const pressLineComponent = {
             m('select#templateSelect', pressState.templates.map(function(template) {
                 return m('option', {value: template._id}, template.name);
             })),
+            m('select#scraperSelect', pressState.scraperIds.map(function(scraperId) {
+                return m('option', {value: scraperId}, scraperId);
+            })),
             m('input#lineInput'),
             m('button', {
                 onclick: function() {
                     const lineInput = document.querySelector('#lineInput');
                     const querySelect = document.querySelector('#querySelect');
                     const templateSelect = document.querySelector('#templateSelect');
+                    const scraperSelect = document.querySelector('#scraperSelect');
                     const queryId = querySelect.children[querySelect.selectedIndex].value;
                     const templateId = templateSelect.children[templateSelect.selectedIndex].value;
+                    const scraperId = scraperSelect.children[scraperSelect.selectedIndex].value;
                     const query = pressState.queries.find(function(query) { return query._id == queryId; });
                     const template = pressState.templates.find(function(template) { return template._id == templateId; });
 
@@ -51,7 +68,8 @@ const pressLineComponent = {
                             name: lineInput.value,
                             time: Date.now(),
                             query: query,
-                            template: template
+                            template: template,
+                            scraperId: scraperId
                         }
                     }).then(function() {
                         lineInput.value = '';
@@ -60,10 +78,24 @@ const pressLineComponent = {
                 }
             }, 'send'),
             m('div', pressState.lines.map(function(line) {
+                const deleteButton = m('button', {
+                    onclick: function() {
+                        return m.request({
+                            method: 'DELETE',
+                            url: '/press/line/'+line._id,
+                            withCredentials: true,
+                        }).then(function() {
+                            refreshPressLines();
+                        });
+                    }
+                }, 'delete');
+
                 return m('div', [
                     m('span', line.name + ' : '),
                     m('span', { title: JSON.stringify(line.query.query) }, line.query.name + ' => '),
-                    m('span', { title: line.template.template }, line.template.name)
+                    m('span', { title: line.template.template }, line.template.name),
+                    m('span', line.scraperId),
+                    deleteButton
                 ]);
             }))
         ]);

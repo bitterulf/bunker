@@ -292,6 +292,7 @@ const renderResultsList = function() {
         m('div', 'page ' + harvestState.harvestResultsPage),
         harvestState.harvestResults.map(function(result) {
             return m('div', [
+                m('span', result.scraperId),
                 m('a', { title: JSON.stringify(result.data), href: result.link }, result.link)
             ]);
         }),

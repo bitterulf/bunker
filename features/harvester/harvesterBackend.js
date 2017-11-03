@@ -208,6 +208,24 @@ const harvesterBackend = {
         });
 
         server.route({
+            method: 'GET',
+            path:'/harvest/results/scraperIds',
+            handler: function (request, reply) {
+                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                    const scraperIds = [];
+
+                    harvesterResults.forEach(function(result) {
+                        if (scraperIds.indexOf(result.scraperId) < 0) {
+                            scraperIds.push(result.scraperId);
+                        }
+                    });
+
+                    reply(scraperIds);
+                });
+            }
+        });
+
+        server.route({
             method: 'POST',
             path:'/harvester/collect',
             handler: function (request, reply) {
