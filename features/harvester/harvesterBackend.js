@@ -11,6 +11,8 @@ const trim = require('trim');
 const harvesterBackend = {
     register: function (server, options, next) {
 
+        server.decorate('request', 'harvesterResultsDB', harvesterResultsDB);
+
         server.route({
             method: 'GET',
             path: '/harvesterFrontend.js',

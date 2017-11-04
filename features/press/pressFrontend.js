@@ -95,6 +95,7 @@ const pressLineComponent = {
                     m('span', { title: JSON.stringify(line.query.query) }, line.query.name + ' => '),
                     m('span', { title: line.template.template }, line.template.name),
                     m('span', line.scraperId),
+                    m('a', { href: '/press/line/' + line._id }, line._id),
                     deleteButton
                 ]);
             }))

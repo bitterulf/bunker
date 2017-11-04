@@ -4,6 +4,8 @@ const Datastore = require('nedb');
 const pressLineDB = new Datastore({ filename: './store/pressLine', autoload: true });
 const pressQueryDB = new Datastore({ filename: './store/pressQuery', autoload: true });
 const pressTemplateDB = new Datastore({ filename: './store/pressTemplate', autoload: true });
+const mingo = require('mingo');
+const Handlebars = require('handlebars');
 
 const pressBackend = {
     register: function (server, options, next) {
@@ -50,6 +52,30 @@ const pressBackend = {
             handler: function (request, reply) {
                 pressLineDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
                     reply({numRemoved: numRemoved});
+                });
+            }
+        });
+
+        server.route({
+            method: 'GET',
+            path:'/press/line/{id}',
+            handler: function (request, reply) {
+                pressLineDB.findOne({ _id: request.params.id }, {}, function (err, pressLineDoc) {
+                    console.log('query', {scraperId: pressLineDoc.scraperId}, pressLineDoc);
+                    request.harvesterResultsDB.find({scraperId: pressLineDoc.scraperId}, {}, function(err, docs) {
+                        const query = new mingo.Query(pressLineDoc.query.query);
+
+                        const template = Handlebars.compile(pressLineDoc.template.template);
+
+                        reply(
+                            docs.filter(function(doc) {
+                                return query.test(doc);
+                            }).map(function(doc) {
+                                return template(doc.data);
+                            }).join('')
+                        );
+                    });
+
                 });
             }
         });
