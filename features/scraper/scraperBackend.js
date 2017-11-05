@@ -1,13 +1,11 @@
 'use strict';
 
 const Datastore = require('nedb');
+
 const scraperDB = new Datastore({ filename: './store/scraper', autoload: true });
 const scraperResultsDB = new Datastore({ filename: './store/scraperResults', autoload: true });
-
 const scraperCacheDB = new Datastore({ filename: './store/scraperCache', autoload: true });
-
 const scraperProcessedResultsDB = new Datastore({ filename: './store/scraperProcessedResults', autoload: true });
-
 const scraperEventsDB = new Datastore({ filename: './store/scraperEvents', autoload: true });
 
 const Xray = require('x-ray');
@@ -137,12 +135,19 @@ const scrapeDump = function(scraper, cb) {
 
 const scraperBackend = {
     register: function (server, options, next) {
+
+        server.decorate('request', 'scraperDB', scraperDB);
+        server.decorate('request', 'scraperResultsDB', scraperResultsDB);
+        server.decorate('request', 'scraperCacheDB', scraperCacheDB);
+        server.decorate('request', 'scraperProcessedResultsDB', scraperProcessedResultsDB);
+        server.decorate('request', 'scraperEventsDB', scraperEventsDB);
+
         server.route({
             method: 'GET',
             path:'/scrapers',
             handler: function (request, reply) {
-                scraperDB.find({}, function (err, scraperDocs) {
-                    scraperResultsDB.find({}, function (err, scraperResults) {
+                request.scraperDB.find({}, function (err, scraperDocs) {
+                    request.scraperResultsDB.find({}, function (err, scraperResults) {
                         const resultSet = {};
 
                         scraperResults.forEach(function(scraperResult) {
@@ -169,7 +174,7 @@ const scraperBackend = {
             method: 'GET',
             path:'/scrapers/dump',
             handler: function (request, reply) {
-                scraperDB.find({}, function (err, scraperDocs) {
+                request.scraperDB.find({}, function (err, scraperDocs) {
                     return reply(scraperDocs.map(function(scraper) {
                         return _.pick(scraper, ['url', 'selector', 'fields']);
                     }));
@@ -181,7 +186,7 @@ const scraperBackend = {
             method: 'POST',
             path:'/scrapers/import',
             handler: function (request, reply) {
-                scraperDB.insert(request.payload, function () {
+                request.scraperDB.insert(request.payload, function () {
                     reply({});
                 });
             }
@@ -191,7 +196,7 @@ const scraperBackend = {
             method: 'GET',
             path:'/scrapers/cache',
             handler: function (request, reply) {
-                scraperCacheDB.find({}, function (err, scraperCacheDocs) {
+                request.scraperCacheDB.find({}, function (err, scraperCacheDocs) {
                     return reply(scraperCacheDocs);
                 });
             }
@@ -201,7 +206,7 @@ const scraperBackend = {
             method: 'POST',
             path:'/scraper',
             handler: function (request, reply) {
-                scraperDB.insert([request.payload], function () {
+                request.scraperDB.insert([request.payload], function () {
                     reply({});
                 });
             }
@@ -211,7 +216,7 @@ const scraperBackend = {
             method: 'DELETE',
             path:'/scraper/{id}',
             handler: function (request, reply) {
-                scraperDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
+                request.scraperDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
                     reply({numRemoved: numRemoved});
                 });
             }
@@ -221,7 +226,7 @@ const scraperBackend = {
             method: 'POST',
             path:'/scraper/{id}/scrape',
             handler: function (request, reply) {
-                scraperDB.findOne({ _id: request.params.id }, function (err, doc) {
+                request.scraperDB.findOne({ _id: request.params.id }, function (err, doc) {
                     if (doc) {
                         scrapeDump(doc, function() {
                             return reply({});
@@ -238,7 +243,7 @@ const scraperBackend = {
             method: 'GET',
             path:'/scraper/events',
             handler: function (request, reply) {
-                scraperEventsDB.find({}, function (err, scraperEvents) {
+                request.scraperEventsDB.find({}, function (err, scraperEvents) {
                     return reply(scraperEvents.sort(function(a, b) {
                         return a.time - b.time;
                     }));

@@ -1,15 +1,17 @@
 'use strict';
 
 const Datastore = require('nedb');
-const notesDB = new Datastore({ filename: './store/notes', autoload: true });
 
 const notesBackend = {
     register: function (server, options, next) {
+
+        server.decorate('request', 'notesDB', new Datastore({ filename: './store/notes', autoload: true }));
+
         server.route({
             method: 'GET',
             path:'/notes',
             handler: function (request, reply) {
-                notesDB.find({}, function (err, docs) {
+                request.notesDB.find({}, function (err, docs) {
                     return reply(docs);
                 });
             }
@@ -19,7 +21,7 @@ const notesBackend = {
             method: 'POST',
             path:'/note',
             handler: function (request, reply) {
-                notesDB.insert([request.payload], function () {
+                request.notesDB.insert([request.payload], function () {
                     reply({});
                 });
             }
@@ -29,7 +31,7 @@ const notesBackend = {
             method: 'DELETE',
             path:'/note/{id}',
             handler: function (request, reply) {
-                notesDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
+                request.notesDB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
                     reply({numRemoved: numRemoved});
                 });
             }

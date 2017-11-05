@@ -1,9 +1,6 @@
 'use strict';
 
 const Datastore = require('nedb');
-const harvesterStepsDB = new Datastore({ filename: './store/harvesterSteps', autoload: true });
-const harvesterEventsDB = new Datastore({ filename: './store/harvesterEvents', autoload: true });
-const harvesterResultsDB = new Datastore({ filename: './store/harvesterResults', autoload: true });
 const unirest = require('unirest');
 const cheerio = require('cheerio');
 const trim = require('trim');
@@ -11,7 +8,9 @@ const trim = require('trim');
 const harvesterBackend = {
     register: function (server, options, next) {
 
-        server.decorate('request', 'harvesterResultsDB', harvesterResultsDB);
+        server.decorate('request', 'harvesterStepsDB', new Datastore({ filename: './store/harvesterSteps', autoload: true }));
+        server.decorate('request', 'harvesterEventsDB', new Datastore({ filename: './store/harvesterEvents', autoload: true }));
+        server.decorate('request', 'harvesterResultsDB', new Datastore({ filename: './store/harvesterResults', autoload: true }));
 
         server.route({
             method: 'GET',
@@ -33,7 +32,7 @@ const harvesterBackend = {
             method: 'GET',
             path:'/harvester/steps',
             handler: function (request, reply) {
-                harvesterStepsDB.find({}, function (err, docs) {
+                request.harvesterStepsDB.find({}, function (err, docs) {
                     return reply(docs);
                 });
             }
@@ -43,14 +42,14 @@ const harvesterBackend = {
             method: 'POST',
             path:'/harvester/steps',
             handler: function (request, reply) {
-                harvesterStepsDB.find({scraperId: request.payload.scraperId}, function (err, docs) {
+                request.harvesterStepsDB.find({scraperId: request.payload.scraperId}, function (err, docs) {
                     if (!docs.length) {
-                        return harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function () {
+                        return request.harvesterStepsDB.insert({ scraperId: request.payload.scraperId, steps:  request.payload.steps }, function () {
                             reply({});
                         });
                     }
 
-                    harvesterStepsDB.update({ scraperId: request.payload.scraperId }, { scraperId: request.payload.scraperId, steps:  request.payload.steps }, {}, function () {
+                    request.harvesterStepsDB.update({ scraperId: request.payload.scraperId }, { scraperId: request.payload.scraperId, steps:  request.payload.steps }, {}, function () {
                         reply({});
                     });
                 });
@@ -88,8 +87,8 @@ const harvesterBackend = {
             method: 'POST',
             path:'/harvester/harvest',
             handler: function (request, reply) {
-                harvesterStepsDB.find({}, function (err, harvesterSteps) {
-                    harvesterEventsDB.find({}, function (err, harvesterEvents) {
+                request.harvesterStepsDB.find({}, function (err, harvesterSteps) {
+                    request.harvesterEventsDB.find({}, function (err, harvesterEvents) {
                         const harvestedScraperEventIds = [];
 
                         harvesterEvents.forEach(function(harvesterEvent) {
@@ -139,7 +138,7 @@ const harvesterBackend = {
                                 return event.scraperEvent.scraperId == request.payload.scraperId;
                             });
 
-                            harvesterEventsDB.insert(filteredEvents, function () {
+                            request.harvesterEventsDB.insert(filteredEvents, function () {
                                 reply({
                                     processed: filteredEvents.length
                                 });
@@ -179,14 +178,14 @@ const harvesterBackend = {
             handler: function (request, reply) {
                 const startIndex = (request.query.page - 1) * 10;
 
-                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                request.harvesterResultsDB.find({}, function (err, harvesterResults) {
                     const harvestedEventIds = [];
 
                     harvesterResults.forEach(function(harvesterResult) {
                         harvestedEventIds.push(harvesterResult.harvesterEventId);
                     });
 
-                    harvesterEventsDB.find({}, function (err, docs) {
+                    request.harvesterEventsDB.find({}, function (err, docs) {
                         const filtered = docs.filter(function(doc) {
                             return harvestedEventIds.indexOf(doc._id) == -1;
                         });
@@ -203,7 +202,7 @@ const harvesterBackend = {
             handler: function (request, reply) {
                 const startIndex = (request.query.page - 1) * 10;
 
-                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                request.harvesterResultsDB.find({}, function (err, harvesterResults) {
                     reply(harvesterResults.slice(startIndex, startIndex + 10));
                 });
             }
@@ -213,7 +212,7 @@ const harvesterBackend = {
             method: 'GET',
             path:'/harvest/results/scraperIds',
             handler: function (request, reply) {
-                harvesterResultsDB.find({}, function (err, harvesterResults) {
+                request.harvesterResultsDB.find({}, function (err, harvesterResults) {
                     const scraperIds = [];
 
                     harvesterResults.forEach(function(result) {
@@ -231,7 +230,7 @@ const harvesterBackend = {
             method: 'POST',
             path:'/harvester/collect',
             handler: function (request, reply) {
-                harvesterEventsDB.findOne({_id: request.payload.id}, function (err, doc) {
+                request.harvesterEventsDB.findOne({_id: request.payload.id}, function (err, doc) {
 
                     unirest
                         .get(doc.scraperEvent.link)
@@ -254,7 +253,7 @@ const harvesterBackend = {
                                 }
                             });
 
-                            harvesterResultsDB.insert(result, function (err, newDoc) {
+                            request.harvesterResultsDB.insert(result, function (err, newDoc) {
                                 reply(newDoc);
                             });
                         });

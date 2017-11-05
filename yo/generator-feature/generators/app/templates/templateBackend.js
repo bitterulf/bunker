@@ -1,10 +1,11 @@
 'use strict';
 
 const Datastore = require('nedb');
-const <%= name %>DB = new Datastore({ filename: './store/<%= name %>', autoload: true });
 
 const <%= name %>Backend = {
     register: function (server, options, next) {
+
+        server.decorate('request', '<%= name %>DB', new Datastore({ filename: './store/<%= name %>', autoload: true }));
 
         server.route({
             method: 'GET',
@@ -26,7 +27,7 @@ const <%= name %>Backend = {
             method: 'GET',
             path:'/<%= name %>',
             handler: function (request, reply) {
-                <%= name %>DB.find({}, function (err, docs) {
+                request.<%= name %>DB.find({}, function (err, docs) {
                     return reply(docs);
                 });
             }
@@ -36,7 +37,7 @@ const <%= name %>Backend = {
             method: 'POST',
             path:'/<%= name %>',
             handler: function (request, reply) {
-                <%= name %>DB.insert([request.payload], function (err, newDocs) {
+                request.<%= name %>DB.insert([request.payload], function (err, newDocs) {
                     reply({});
                 });
             }
@@ -46,7 +47,7 @@ const <%= name %>Backend = {
             method: 'DELETE',
             path:'/<%= name %>/{id}',
             handler: function (request, reply) {
-                <%= name %>DB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
+                request.<%= name %>DB.remove({ _id: request.params.id }, {}, function (err, numRemoved) {
                     reply({numRemoved: numRemoved});
                 });
             }
