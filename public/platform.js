@@ -75,4 +75,14 @@ Platform.prototype.title = function(title) {
     return m('h1', {}, title);
 };
 
+Platform.prototype.style = {
+    button: {
+        background: 'lightgrey',
+        border: '1px solid black',
+        'border-radius': '4px',
+        margin: '2px',
+        cursor: 'pointer'
+    }
+};
+
 const platform = new Platform();

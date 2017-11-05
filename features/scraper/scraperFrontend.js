@@ -62,34 +62,8 @@ const Scraper = {
     },
     view: function() {
         const renderScraper = function(scraper) {
-            if (scraperState.selected != scraper._id) {
-                return '';
-            }
-
             return m('div',
                 [
-                    m('button', {
-                        onclick: function() {
-                            return m.request({
-                                method: 'POST',
-                                url: '/scraper/'+scraper._id+'/scrape',
-                                withCredentials: true,
-                            }).then(function() {
-                                refreshScrapers();
-                            });
-                        }
-                    }, 'scrape'),
-                    m('button', {
-                        onclick: function() {
-                            return m.request({
-                                method: 'DELETE',
-                                url: '/scraper/'+scraper._id,
-                                withCredentials: true,
-                            }).then(function() {
-                                refreshScrapers();
-                            });
-                        }
-                    }, 'delete'),
                     renderResults(scraper)
                 ]
             );
@@ -98,17 +72,19 @@ const Scraper = {
         const renderSelector = function(scraper) {
             if (scraperState.selected != scraper._id) {
                 return m('button', {
+                    style: platform.style.button,
                     onclick: function() {
                         scraperState.selected = scraper._id;
                     }
-                }, 'select');
+                }, '-');
             }
 
             return m('button', {
+                style: platform.style.button,
                 onclick: function() {
                     scraperState.selected = null;
                 }
-            }, 'unselect');
+            }, 'x');
         };
 
         const renderResults = function(scraper) {
@@ -133,10 +109,16 @@ const Scraper = {
 
                 return m('div',
                     {
-                        title: result.changed ? JSON.stringify(entries) : '',
-                        style: result.changed ? 'background: red;' : ''
-                    },
-                    (new Date(result.time)).toISOString()
+                        title: (new Date(result.time)).toISOString() + (result.changed ? JSON.stringify(entries) : ''),
+                        style: {
+                            margin: '1px',
+                            background: result.changed ? 'green' : 'lightgrey',
+                            border: '1px solid grey',
+                            width: '10px',
+                            height: '10px',
+                            display: 'inline-block'
+                        }
+                    }
                 );
             }));
         };
@@ -144,43 +126,71 @@ const Scraper = {
         return  m('.scraperFeature', [
             platform.title('scraper'),
             platform.menu('scraper'),
-            m('div', [m('button', {
-                onclick: function() {
-                    refreshScrapers();
-                }
-            }, 'refresh')]),
-            m('input#scraperUrl', {placeholder: 'url'}),
-            m('input#scraperSelector', {placeholder: 'selector'}),
-            m('textarea#scraperFields', {placeholder: '"title":"a","link":"a@href"'}),
-            m('button', {
-                onclick: function() {
-                    const scraperUrl = document.querySelector('#scraperUrl');
-                    const scraperSelector = document.querySelector('#scraperSelector');
-                    const scraperFields = document.querySelector('#scraperFields');
+            m('div', { style: 'display: inline-block' }, [
 
-                    return m.request({
-                        method: 'POST',
-                        url: '/scraper',
-                        withCredentials: true,
-                        data: {
-                            time: Date.now(),
-                            url: scraperUrl.value,
-                            selector: scraperSelector.value,
-                            fields: JSON.parse('{'+scraperFields.value+'}')
-                        }
-                    }).then(function() {
-                        scraperUrl.value = '';
-                        scraperSelector.value = '';
-                        scraperFields.value = '';
-                        refreshScrapers();
-                    });
-                }
-            }, 'send'),
+                m('input#scraperUrl', { style: 'display: block', placeholder: 'url'}),
+                m('input#scraperSelector', { style: 'display: block', placeholder: 'selector'}),
+                m('button', {
+                    style: platform.style.button,
+                    onclick: function() {
+                        const scraperUrl = document.querySelector('#scraperUrl');
+                        const scraperSelector = document.querySelector('#scraperSelector');
+                        const scraperFields = document.querySelector('#scraperFields');
+
+                        return m.request({
+                            method: 'POST',
+                            url: '/scraper',
+                            withCredentials: true,
+                            data: {
+                                time: Date.now(),
+                                url: scraperUrl.value,
+                                selector: scraperSelector.value,
+                                fields: JSON.parse('{'+scraperFields.value+'}')
+                            }
+                        }).then(function() {
+                            scraperUrl.value = '';
+                            scraperSelector.value = '';
+                            scraperFields.value = '';
+                            refreshScrapers();
+                        });
+                    }
+                }, 'send')
+
+            ]),
+            m('textarea#scraperFields', {placeholder: '"title":"a","link":"a@href"'}),
             m('div', scraperState.scrapers.map(function(scraper) {
+                const scraperDomain = scraper.url.split('/')[2];
+
                 return m('div', [
-                    m('div', {title: JSON.stringify(scraper.fields)}, scraper.url+' - '+scraper.selector+' ['+scraper.results.length+']'),
                     renderSelector(scraper),
-                    renderScraper(scraper)
+                    m('button', {
+                        style: platform.style.button,
+                        onclick: function() {
+                            return m.request({
+                                method: 'POST',
+                                url: '/scraper/'+scraper._id+'/scrape',
+                                withCredentials: true,
+                            }).then(function() {
+                                refreshScrapers();
+                            });
+                        }
+                    }, 'scrape'),
+                    m('button', {
+                        style: platform.style.button,
+                        onclick: function() {
+                            if (window.confirm('delete scraper?')) {
+                                return m.request({
+                                    method: 'DELETE',
+                                    url: '/scraper/'+scraper._id,
+                                    withCredentials: true,
+                                }).then(function() {
+                                    refreshScrapers();
+                                });
+                            }
+                        }
+                    }, 'delete'),
+                    m('span', {title: scraper.url + ' ' + JSON.stringify(scraper.fields)}, scraperDomain + ' - '+scraper.selector+' ['+scraper.results.length+']'),
+                    scraperState.selected == scraper._id ? renderScraper(scraper) : ''
                 ]);
             }))
         ]);
@@ -195,7 +205,13 @@ const ScraperDump = {
         return m('.scraperFeature', [
             platform.title('scraper dump'),
             platform.menu('scraper dump'),
-            m('div', scraperState.scraperDump)
+            m('div', {
+                style: {
+                    background: 'white',
+                    margin: '10px',
+                    padding: '10px'
+                }
+            }, scraperState.scraperDump)
         ]);
     }
 };
@@ -208,26 +224,29 @@ const ScraperImport = {
             platform.title('scraper import'),
             platform.menu('scraper import'),
             m('textarea#scraperImport', {placeholder: '{title: \'h1 a\'}'}),
-            m('button', {onclick: function() {
-                const scraperFields = document.querySelector('#scraperImport');
-                let parsedData;
-                try {
-                    parsedData = JSON.parse(scraperFields.value);
+            m('button', {
+                style: platform.style.button,
+                onclick: function() {
+                    const scraperFields = document.querySelector('#scraperImport');
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(scraperFields.value);
 
-                    return m.request({
-                        method: 'POST',
-                        url: '/scrapers/import',
-                        withCredentials: true,
-                        data: parsedData
-                    }).then(function() {
-                        refreshScrapers();
-                        scraperFields.value = '';
-                    });
-                } catch (e) {
-                    // console.log(e);
+                        return m.request({
+                            method: 'POST',
+                            url: '/scrapers/import',
+                            withCredentials: true,
+                            data: parsedData
+                        }).then(function() {
+                            refreshScrapers();
+                            scraperFields.value = '';
+                        });
+                    } catch (e) {
+                        // console.log(e);
+                    }
+
                 }
-
-            }}, 'import!'),
+            }, 'import!'),
         ]);
     }
 };
@@ -241,7 +260,8 @@ const ScraperEvents = {
             platform.title('scraper events'),
             platform.menu('scraper events'),
             m('div', scraperState.scraperEvents.map(function(event) {
-                return m('div', m('a', { href: event.link }, event.scraperId + ' - ' + (new Date(event.time)).toISOString() + ': ' + event.title));
+                const domain = event.link.split('/')[2];
+                return m('div', [ m('span', domain + ': '), m('a', { href: event.link }, event.title) ]);
             }))
         ]);
     }
